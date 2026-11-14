@@ -23,7 +23,7 @@ window.STR = {
   restart: ['Restart', '重来'],
 
   goalQ: ['What is the "End Product"\nof this line?', '这条线的「成品」是什么？'],
-  goalSub: ['Put in something you want to complete. It can be broad; it can be bold.', '写下你想完成的事。可以很大，也可以很大胆。'],
+  goalSub: ['Put in something you want to complete.', '写下你想完成的事。'],
   goalPh: ['', ''],
   dlQ: ['Any deadline?', '有截止日期吗？'],
   dlNo: ['No', '没有'],
