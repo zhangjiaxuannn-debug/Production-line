@@ -369,7 +369,20 @@
       box.style.translate = (xm - g.offsetWidth / 2) + 'px 0';
     });
   }
-  function relayoutTrees() { compactTrees(); layoutBelts(); }
+  function fitTitles() {
+    var list = document.querySelectorAll('.h1[data-k="h1"]');
+    for (var i = 0; i < list.length; i++) {
+      var el = list[i];
+      el.style.fontSize = ''; el.classList.remove('one');
+      if (el.textContent.indexOf('\n') < 0) { el.classList.remove('fit'); continue; }
+      el.classList.add('fit'); el.classList.add('one');
+      if (el.scrollWidth <= el.clientWidth + 0.5) continue;
+      el.classList.remove('one');
+      var fs = parseFloat(getComputedStyle(el).fontSize);
+      while (el.scrollWidth > el.clientWidth + 0.5 && fs > 16) { fs -= 0.5; el.style.fontSize = fs + 'px'; }
+    }
+  }
+  function relayoutTrees() { fitTitles(); compactTrees(); layoutBelts(); }
   window.addEventListener('resize', relayoutTrees);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayoutTrees);
 
@@ -855,7 +868,7 @@
     var su = T.setup;
     if (su.phase === 'done') return '';
     if (!suFirstDraft() && suMissing() > 0) return tr('subMins');
-    return tr('subAdd');
+    return tr('subAdd') + (S.clockSeen ? '' : ' ' + tr('subClock'));
   }
   function suChainView() {
     var su = T.setup, md = suDepth(su.root), q = suHeading();
@@ -947,6 +960,7 @@
     document.title = tr('app');
     var body = T.screen === 'setup' ? vSetup() : (T.screen === 'line' ? vLine() : (T.screen === 'settings' ? vSettings() : vList()));
     app.innerHTML = body + vSheet();
+    fitTitles();
     compactTrees();
     layoutBelts();
     if (prev) play(prev);
@@ -1287,7 +1301,7 @@
         if (e) e.stopPropagation();
         if (su.phase !== 'chain') return;
         T.sheet = { type: 'sumins', id: id }; render(); return;
-      case 'su-pick': f = suFind(id); if (!f) return; suPush(); f.n.mins = +v; render(); return;
+      case 'su-pick': f = suFind(id); if (!f) return; suPush(); f.n.mins = +v; if (!S.clockSeen) { S.clockSeen = true; save(); } render(); return;
       case 'su-rep':
         f = suFind(id); if (!f) return; suPush();
         f.n.rep = v === 'daily' ? [0, 1, 2, 3, 4, 5, 6] : (v === 'days' ? [new Date().getDay()] : null);
@@ -1301,7 +1315,7 @@
         var cv = Math.round(+(document.getElementById('cm-' + id) || {}).value);
         if (!(cv >= 1)) return;
         suPush();
-        f.n.mins = Math.min(480, cv); T.sheet = null; render(); return;
+        f.n.mins = Math.min(480, cv); if (!S.clockSeen) { S.clockSeen = true; save(); } T.sheet = null; render(); return;
       case 'su-edit':
         if (su.phase !== 'chain') return;
         f = suFind(id); if (!f || f.n.state !== 'set') return;

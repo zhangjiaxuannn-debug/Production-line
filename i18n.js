@@ -22,7 +22,7 @@ window.STR = {
   lang: ['中文', 'English'],
   restart: ['Restart', '重来'],
 
-  goalQ: ['What is the "End Product" of this line?', '这条线的「成品」是什么？'],
+  goalQ: ['What is the "End Product"\nof this line?', '这条线的「成品」是什么？'],
   goalSub: ['Put in something you want to complete. It can be broad; it can be bold.', '写下你想完成的事。可以很大，也可以很大胆。'],
   goalPh: ['', ''],
   dlQ: ['Any deadline?', '有截止日期吗？'],
@@ -69,7 +69,8 @@ window.STR = {
   pickDate: ['Pick a day', '选一天'],
   prevMonth: ['Previous month', '上个月'],
   nextMonth: ['Next month', '下个月'],
-  subAdd: ['Break your End Product into steps. What needs to happen right before it? After editing a step, tap the clock beside it to set the estimated time to complete it', '把最终产品拆成步骤：它的前一步是什么？编辑完一步后，点旁边的钟表，设定预计完成时间'],
+  subAdd: ['Break your End Product into steps. What needs to happen right before it?', '把最终产品拆成步骤：它的前一步是什么？'],
+  subClock: ['Tap the clock beside a step to set its time.', '点步骤旁边的钟表，设定所需时间。'],
   subMins: ['Tap "+ min" to set how long a step takes', '点「+ 时长」设定每步要多久'],
   setTime: ['Set time', '设定时间'],
   na: ['NA', '无'],

@@ -488,3 +488,7 @@ legend { padding: 0; margin-bottom: 10px; font-size: 17px; font-weight: 700; }
 .cur-wrap.idle .tag-v { background: var(--accent); color: var(--on-accent); }
 .cur-wrap.idle .corner-t { background: var(--accent); }
 .cur-wrap.idle .b-navy.b-done { background: var(--accent); color: var(--on-accent); }
+
+/* goal question: fixed line break, font shrinks to fit the first line */
+.h1.fit { white-space: pre; text-wrap: nowrap; }
+.h1.fit.one { white-space: nowrap; }
