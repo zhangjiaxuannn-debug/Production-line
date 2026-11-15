@@ -1,7 +1,7 @@
 {
   "name": "生产线",
   "short_name": "生产线",
-  "description": "Turn what you want to finish into a production line.",
+  "description": "Break a hard task into small steps you can do, and schedule them before your deadline.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

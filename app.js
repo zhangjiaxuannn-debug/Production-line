@@ -557,7 +557,7 @@
     });
     var sb = S.goals.filter(function (g) { return g.status === 'standby'; });
     var h = '<main class="list"><div class="top"><span class="eyebrow">' + esc(tr('app')) + '</span><div class="top-r"><button type="button" class="ghost-sm" data-a="open-settings">' + esc(tr('settings')) + '</button></div></div>';
-    h += '<h1 class="list-h">' + esc(tr('lines')) + '</h1>';
+    h += '<p class="tagline">' + esc(tr('tagline')) + '</p><h1 class="list-h">' + esc(tr('lines')) + '</h1>';
     h += '<div class="vt tabs" role="group"><button type="button" class="' + (S.home !== 'time' ? 'sel' : '') + '" aria-pressed="' + (S.home !== 'time') + '" data-a="home-tab" data-v="lines">' + esc(tr('tabLines')) + '</button><button type="button" class="' + (S.home === 'time' ? 'sel' : '') + '" aria-pressed="' + (S.home === 'time') + '" data-a="home-tab" data-v="time">' + esc(tr('tabTime')) + '</button></div>';
     if (S.home === 'time') return h + vTimeline(null) + '<div style="height:48px"></div></main>';
     if (!S.goals.length) h += '<div class="small">' + esc(tr('noGoals')) + '</div>';
@@ -1119,7 +1119,7 @@
     var prev = T.screen === 'setup' ? snap() : null;
     var treeEl = document.getElementById('tree'), treeX = treeEl ? treeEl.scrollLeft : null;
     document.documentElement.lang = S.lang === 'zh' ? 'zh-CN' : 'en';
-    document.title = tr('app');
+    document.title = tr('app') + ' · ' + tr('titleTag');
     var body = T.screen === 'setup' ? vSetup() : (T.screen === 'line' ? vLine() : (T.screen === 'settings' ? vSettings() : vList()));
     app.innerHTML = body + vSheet();
     initPicker();

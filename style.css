@@ -529,3 +529,6 @@ legend { padding: 0; margin-bottom: 10px; font-size: 17px; font-weight: 700; }
 .tips-btn { flex-shrink: 0; border: 1px solid var(--line); min-height: 32px; padding: 0 10px; margin-top: 2px; color: var(--ink); }
 .tips-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 10px; font-size: 15px; line-height: 1.5; }
 .tree .col, .tree .col.m { padding-left: 16px; padding-right: 16px; }
+
+/* home: one line saying what this is */
+.tagline { margin: 2px 0 6px; font-size: 14px; line-height: 1.5; color: var(--muted); }
