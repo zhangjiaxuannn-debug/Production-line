@@ -1137,13 +1137,17 @@
       if (el) {
         try { el.focus({ preventScroll: !focusId }); } catch (e) { el.focus(); }
         if (sel && sel[0] != null && el.setSelectionRange) { try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} }
-        if (focusId && T.screen === 'setup' && T.setup.phase === 'chain') setTimeout(function () {
-          try {
-            var r = el.getBoundingClientRect();
-            if (r.top < 70 || r.bottom > window.innerHeight - 20 || r.left < 0 || r.right > window.innerWidth) el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
-          } catch (e) {}
-        }, 460);
       }
+    }
+    if (!T.centerId && focusId && String(focusId).indexOf('in-') === 0) T.centerId = String(focusId).slice(3);
+    if (T.centerId && T.screen === 'setup' && T.setup && T.setup.phase === 'chain') {
+      var cid = T.centerId; T.centerId = null;
+      setTimeout(function () {
+        try {
+          var bx = document.querySelector('[data-k="b-' + cid + '"]');
+          if (bx) bx.scrollIntoView({ block: 'center', inline: 'center', behavior: reduce ? 'auto' : 'smooth' });
+        } catch (e) {}
+      }, 460);
     }
   }
 
@@ -1219,7 +1223,7 @@
   app.addEventListener('focusin', function (e) {
     var t = e.target, su = T.setup;
     if (!su || !t.dataset || !t.dataset.sid || su.focus === t.dataset.sid) return;
-    su.focus = t.dataset.sid; su.sel = null; render();
+    su.focus = t.dataset.sid; su.sel = null; T.centerId = t.dataset.sid; render();
   });
   app.addEventListener('keydown', function (e) {
     var t = e.target;
@@ -1468,9 +1472,9 @@
       case 'su-edit':
         if (su.phase !== 'chain') return;
         f = suFind(id); if (!f || f.n.state !== 'set') return;
-        if (su.sel !== id) { su.sel = id; render(); return; }
+        if (su.sel !== id) { su.sel = id; T.centerId = id; render(); return; }
         suPush();
-        f.n.state = 'draft'; su.focus = f.n.id; su.sel = null; render('in-' + f.n.id); return;
+        f.n.state = 'draft'; su.focus = f.n.id; su.sel = null; T.centerId = f.n.id; render('in-' + f.n.id); return;
       case 'line-edit':
         (function () { var lg = gById(S.cur); if (!lg) return; save(); T.setup = suFromGoal(lg); T.screen = 'setup'; T.sheet = null; T.msg = ''; })();
         break;
