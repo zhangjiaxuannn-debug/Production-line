@@ -670,12 +670,167 @@
     if (repMode === 'days') h += '<div class="chips">' + DAY_ORDER.map(function (x) { var sel = repDays.indexOf(x) >= 0; return '<button type="button" class="chip day' + (sel ? ' sel' : '') + '" aria-pressed="' + sel + '" data-a="sh-day" data-v="' + x + '">' + esc(dayName(x)) + '</button>'; }).join('') + '</div>';
     return h;
   }
-  function suRepHtml(n) {
-    var rep = n && n.rep || null, mode = !rep ? 'none' : (rep.length === 7 ? 'daily' : 'days'), id = n ? n.id : '';
-    var h = '<div class="small">' + esc(tr('repeat')) + '</div><div class="chips">' + [['none', 'noRepeat'], ['daily', 'daily'], ['days', 'pickDays']].map(function (r) { var sel = mode === r[0]; return '<button type="button" class="chip' + (sel ? ' sel' : '') + '" aria-pressed="' + sel + '" data-a="su-rep" data-id="' + id + '" data-v="' + r[0] + '">' + esc(tr(r[1])) + '</button>'; }).join('') + '</div>';
-    if (mode === 'days') h += '<div class="chips">' + DAY_ORDER.map(function (x) { var sel = rep.indexOf(x) >= 0; return '<button type="button" class="chip day' + (sel ? ' sel' : '') + '" aria-pressed="' + sel + '" data-a="su-repday" data-id="' + id + '" data-v="' + x + '">' + esc(dayName(x)) + '</button>'; }).join('') + '</div>';
-    return h;
+  /* ---------- duration and repeat picker (setup sheet) ---------- */
+  var pkResize = null;
+  function pkBuzz() { try { if (navigator.vibrate) navigator.vibrate(4); } catch (e) {} }
+  function initPicker() {
+    if (pkResize) { window.removeEventListener('resize', pkResize); pkResize = null; }
+    var sh = T.sheet; if (!sh || sh.type !== 'sumins') return;
+    var f = suFind(sh.id); if (!f) return;
+    var n = f.n, PRESET = [5, 15, 30, 60];
+    var st = {
+      dur: n.mins == null ? -1 : (n.mins === 0 ? 4 : (PRESET.indexOf(n.mins) >= 0 ? PRESET.indexOf(n.mins) : 4)),
+      unsure: n.mins === 0,
+      rep: !n.rep || !n.rep.length ? 0 : (n.rep.length === 7 ? 1 : 2),
+      days: DAY_ORDER.map(function (d) { return !!(n.rep && n.rep.indexOf(d) >= 0); })
+    };
+    function touch() {
+      if (!sh.pushed) { suPush(); sh.pushed = true; }
+      if (!S.clockSeen) { S.clockSeen = true; save(); }
+    }
+    function applyRep() {
+      var arr = [];
+      st.days.forEach(function (v, i) { if (v) arr.push(DAY_ORDER[i]); });
+      n.rep = st.rep === 0 || !arr.length ? null : arr;
+    }
+
+    /* single-select bar with a sliding thumb */
+    function makeSeg(el, labels, get, set) {
+      el.innerHTML = '<i class="pk-thumb"></i>' + labels.map(function (t, i) { return '<span class="pk-cell" role="radio" data-i="' + i + '">' + esc(t) + '</span>'; }).join('');
+      var thumb = el.querySelector('.pk-thumb'), cells = el.querySelectorAll('.pk-cell');
+      function paint(i) {
+        var w = el.clientWidth / labels.length;
+        thumb.style.width = w + 'px';
+        thumb.style.transform = 'translateX(' + (Math.max(i, 0) * w) + 'px)';
+        thumb.style.opacity = i < 0 ? '0' : '1';
+        for (var k = 0; k < cells.length; k++) { cells[k].classList.toggle('on', k === i); cells[k].setAttribute('aria-checked', String(k === i)); }
+      }
+      function idxAt(x) {
+        var r = el.getBoundingClientRect();
+        return Math.max(0, Math.min(labels.length - 1, Math.floor((x - r.left) / (r.width / labels.length))));
+      }
+      var dragging = false, live = 0, sx = 0, sy = 0, decided = false;
+      el.addEventListener('pointerdown', function (e) {
+        dragging = true; decided = false; sx = e.clientX; sy = e.clientY;
+        live = idxAt(e.clientX);
+        if (live !== get()) pkBuzz();
+        paint(live);
+      });
+      el.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        if (!decided) {
+          if (Math.abs(e.clientY - sy) > 10 && Math.abs(e.clientY - sy) > Math.abs(e.clientX - sx)) { dragging = false; paint(get()); return; }
+          if (Math.abs(e.clientX - sx) > 4) { decided = true; el.classList.add('dragging'); try { el.setPointerCapture(e.pointerId); } catch (err) {} }
+        }
+        var i = idxAt(e.clientX);
+        if (i !== live) { live = i; pkBuzz(); paint(i); }
+      });
+      el.addEventListener('pointerup', function () { if (!dragging) return; dragging = false; el.classList.remove('dragging'); set(live); });
+      el.addEventListener('pointercancel', function () { dragging = false; el.classList.remove('dragging'); paint(get()); });
+      el.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowRight') { e.preventDefault(); set(Math.min(labels.length - 1, Math.max(0, get()) + 1)); }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); set(Math.max(0, get() - 1)); }
+      });
+      thumb.style.transition = 'none'; paint(get());
+      requestAnimationFrame(function () { requestAnimationFrame(function () { thumb.style.transition = ''; }); });
+      return { paint: paint, thumb: thumb };
+    }
+
+    var otherWrap = document.getElementById('pkOtherWrap'), otherIn = document.getElementById('pkOtherIn'), unsure = document.getElementById('pkUnsure');
+    var daysWrap = document.getElementById('pkDaysWrap'), daysEl = document.getElementById('pkDays'), sumEl = document.getElementById('pkSum');
+    if (!otherWrap || !daysEl) return;
+
+    var dur = makeSeg(document.getElementById('pkDur'), ['5', '15', '30', '60', tr('otherSeg')], function () { return st.dur; }, function (i) {
+      touch(); st.dur = i; dur.paint(i);
+      if (i < 4) { n.mins = PRESET[i]; st.unsure = false; unsure.setAttribute('aria-pressed', 'false'); otherIn.disabled = false; }
+      else if (n.mins != null && n.mins !== 0 && PRESET.indexOf(n.mins) >= 0) { n.mins = null; otherIn.value = ''; }
+      otherWrap.classList.toggle('open', i === 4);
+    });
+    otherIn.addEventListener('input', function () {
+      var v = otherIn.value.replace(/[^0-9]/g, '');
+      if (v !== otherIn.value) otherIn.value = v;
+      touch();
+      var m = Math.round(+v);
+      n.mins = m >= 1 ? Math.min(480, m) : null;
+    });
+    unsure.addEventListener('click', function () {
+      touch(); st.unsure = !st.unsure;
+      unsure.setAttribute('aria-pressed', String(st.unsure));
+      otherIn.disabled = st.unsure;
+      if (st.unsure) { otherIn.value = ''; n.mins = 0; } else n.mins = null;
+    });
+
+    /* days: drag to paint */
+    var dayLong = DAY_ORDER.map(function (d) { return dayName(d); });
+    var dayShortLbl = S.lang === 'zh' ? dayLong : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    daysEl.innerHTML = dayShortLbl.map(function (d, i) { return '<span class="pk-cell" role="checkbox" aria-label="' + esc(dayLong[i]) + '" data-i="' + i + '">' + esc(d) + '</span>'; }).join('');
+    var dayCells = daysEl.querySelectorAll('.pk-cell');
+    function paintDays() {
+      for (var i = 0; i < 7; i++) { dayCells[i].classList.toggle('on', st.days[i]); dayCells[i].setAttribute('aria-checked', String(st.days[i])); }
+      var picked = [];
+      st.days.forEach(function (v, i) { if (v) picked.push(dayLong[i]); });
+      var sum;
+      if (picked.length === 7) sum = tr('everyDay');
+      else if (picked.length === 5 && st.days.slice(0, 5).every(Boolean)) sum = tr('weekdays');
+      else if (picked.length === 2 && st.days[5] && st.days[6]) sum = tr('weekends');
+      else if (picked.length) sum = tr('everyX', { x: picked.join(tr('sumSep')) });
+      else sum = tr('pickOne');
+      sumEl.textContent = sum;
+    }
+    function dayAt(x) {
+      var r = daysEl.getBoundingClientRect();
+      return Math.max(0, Math.min(6, Math.floor((x - r.left) / (r.width / 7))));
+    }
+    var rep;
+    function afterDays() {
+      touch();
+      var all = st.days.every(Boolean);
+      if (all && st.rep !== 1) { st.rep = 1; rep.paint(1); }
+      else if (!all && st.rep === 1) { st.rep = 2; rep.paint(2); }
+      applyRep(); paintDays();
+    }
+    var dDrag = false, dMode = true, dLast = -1, dsx = 0, dsy = 0, dDecided = false;
+    daysEl.addEventListener('pointerdown', function (e) {
+      dDrag = true; dDecided = false; dsx = e.clientX; dsy = e.clientY;
+      var i = dayAt(e.clientX);
+      dMode = !st.days[i]; st.days[i] = dMode; dLast = i; pkBuzz(); afterDays();
+    });
+    daysEl.addEventListener('pointermove', function (e) {
+      if (!dDrag) return;
+      if (!dDecided) {
+        if (Math.abs(e.clientY - dsy) > 10 && Math.abs(e.clientY - dsy) > Math.abs(e.clientX - dsx)) { dDrag = false; return; }
+        if (Math.abs(e.clientX - dsx) > 4) { dDecided = true; try { daysEl.setPointerCapture(e.pointerId); } catch (err) {} }
+      }
+      var i = dayAt(e.clientX);
+      if (i === dLast) return;
+      var a = Math.min(i, dLast), b = Math.max(i, dLast);
+      for (var k = a; k <= b; k++) st.days[k] = dMode;
+      dLast = i; pkBuzz(); afterDays();
+    });
+    daysEl.addEventListener('pointerup', function () { dDrag = false; });
+    daysEl.addEventListener('pointercancel', function () { dDrag = false; });
+    daysEl.addEventListener('keydown', function (e) {
+      var k = '1234567'.indexOf(e.key);
+      if (k >= 0) { st.days[k] = !st.days[k]; afterDays(); }
+    });
+
+    rep = makeSeg(document.getElementById('pkRep'), [tr('noRepeat'), tr('daily'), tr('pickDays')], function () { return st.rep; }, function (i) {
+      touch(); st.rep = i; rep.paint(i);
+      if (i === 1) st.days = [true, true, true, true, true, true, true];
+      if (i === 2 && st.days.every(Boolean)) st.days = [false, false, false, false, false, false, false];
+      if (i === 2 && !st.days.some(Boolean)) st.days[(new Date().getDay() + 6) % 7] = true;
+      daysWrap.classList.toggle('open', i !== 0);
+      applyRep(); paintDays();
+    });
+    paintDays();
+    pkResize = function () {
+      [dur, rep].forEach(function (g) { g.thumb.style.transition = 'none'; });
+      dur.paint(st.dur); rep.paint(st.rep);
+      requestAnimationFrame(function () { dur.thumb.style.transition = ''; rep.thumb.style.transition = ''; });
+    };
+    window.addEventListener('resize', pkResize);
   }
+
   function vSheet() {
     var sh = T.sheet; if (!sh) return '';
     var inner = '', f;
@@ -713,9 +868,14 @@
       if (sh.confirm) inner += '<div class="h3">' + esc(tr('delAsk')) + '</div><div class="btns"><button type="button" class="b-primary" data-a="del-yes">' + esc(tr('del')) + '</button><button type="button" class="b-outline" data-a="close">' + esc(tr('cancel')) + '</button></div>';
       else inner += '<button type="button" class="b-outline" data-a="' + (f.status === 'standby' ? 'resume' : 'standby') + '" data-id="' + f.id + '">' + esc(f.status === 'standby' ? tr('resume') : tr('toStandby')) + '</button><button type="button" class="b-outline" data-a="del-ask">' + esc(tr('del')) + '</button><button type="button" class="b-text" data-a="close">' + esc(tr('close')) + '</button>';
     } else if (sh.type === 'sumins') {
-      var sf = suFind(sh.id), cur = sf ? sf.n.mins : null;
-      inner = '<div class="h3">' + esc(tr('qHow')) + '</div><div class="chips">' + [5, 15, 30, 60, 0].map(function (m) { var on = cur === m; return '<button type="button" class="chip' + (on ? ' sel' : '') + '" aria-pressed="' + on + '" data-a="su-pick" data-id="' + sh.id + '" data-v="' + m + '">' + esc(minsLbl(m)) + '</button>'; }).join('') + '</div>' +
-        '<div class="plan-c"><input id="cm-' + sh.id + '" class="field" type="number" inputmode="numeric" min="1" max="480" placeholder="' + esc(tr('other')) + '" data-cid="' + sh.id + '"><button type="button" class="ok2" data-a="su-pick-c" data-id="' + sh.id + '" aria-label="' + esc(tr('ok')) + '">' + ARROW + '</button></div>' + suRepHtml(sf ? sf.n : null) + '<button type="button" class="b-primary" data-a="close">' + esc(tr('good')) + '</button>';
+      var sf = suFind(sh.id), pm = sf ? sf.n.mins : null, pr = sf ? sf.n.rep : null;
+      var pOther = pm === 0 || (pm != null && [5, 15, 30, 60].indexOf(pm) < 0);
+      inner = '<div class="h3">' + esc(tr('qHow')) + '</div>' +
+        '<div class="pk-grp"><div class="pk-lbl">' + esc(tr('minPh')) + '</div><div class="pk-bar pk-seg" id="pkDur" role="radiogroup" tabindex="0"></div>' +
+        '<div class="pk-reveal' + (pOther ? ' open' : '') + '" id="pkOtherWrap"><div><div class="pk-in"><div class="pk-other"><input id="pkOtherIn" inputmode="numeric" autocomplete="off" aria-label="' + esc(tr('minPh')) + '" placeholder="' + esc(tr('minPh')) + '" value="' + (pm > 0 && [5, 15, 30, 60].indexOf(pm) < 0 ? pm : '') + '"' + (pm === 0 ? ' disabled' : '') + '><button type="button" class="pk-unsure" id="pkUnsure" aria-pressed="' + (pm === 0) + '">' + esc(tr('notSure')) + '</button></div></div></div></div></div>' +
+        '<div class="pk-grp"><div class="pk-lbl">' + esc(tr('repeat')) + '</div><div class="pk-bar pk-seg" id="pkRep" role="radiogroup" tabindex="0"></div>' +
+        '<div class="pk-reveal' + (pr && pr.length ? ' open' : '') + '" id="pkDaysWrap"><div><div class="pk-in"><div class="pk-bar pk-days" id="pkDays" role="group" tabindex="0"></div><div class="pk-sum" id="pkSum" aria-live="polite"></div></div></div></div></div>' +
+        '<button type="button" class="pk-ok" data-a="close">' + esc(tr('good')) + '</button>';
     } else if (sh.type === 'day') {
       var row = function (lbl, key, val) { return '<div class="step-row"><span>' + esc(lbl) + '</span><div class="btns"><button type="button" class="mini" data-a="day-' + key + '" data-v="-1" aria-label="-1">−</button><span class="pct">' + fmtHour(val) + '</span><button type="button" class="mini" data-a="day-' + key + '" data-v="1" aria-label="+1">+</button></div></div>'; };
       inner = '<div class="h3">' + esc(tr('dayTitle')) + '</div><div class="small">' + esc(tr('dayNote')) + '</div>' + row(tr('dayStart'), 's', S.day.s) + row(tr('dayEnd'), 'e', S.day.e) + '<button type="button" class="b-primary" data-a="close">' + esc(tr('good')) + '</button>';
@@ -726,7 +886,7 @@
     } else if (sh.type === 'import') {
       inner = '<div class="h3">' + esc(tr('bkReplaceQ')) + '</div><div class="small">' + esc(tr('bkInfo', { n: sh.data.goals.length })) + '</div><div class="btns"><button type="button" class="b-primary" data-a="bk-replace">' + esc(tr('bkReplace')) + '</button><button type="button" class="b-outline" data-a="close">' + esc(tr('cancel')) + '</button></div>';
     }
-    return '<div class="scrim" data-a="scrim"><div class="sheet" role="dialog" aria-modal="true">' + inner + '</div></div>';
+    return '<div class="scrim" data-a="scrim"><div class="sheet' + (sh.type === 'sumins' ? ' pk-sheet' : '') + '" role="dialog" aria-modal="true">' + inner + '</div></div>';
   }
 
   /* ---------- setup flow (backward planning) ---------- */
@@ -960,6 +1120,7 @@
     document.title = tr('app');
     var body = T.screen === 'setup' ? vSetup() : (T.screen === 'line' ? vLine() : (T.screen === 'settings' ? vSettings() : vList()));
     app.innerHTML = body + vSheet();
+    initPicker();
     fitTitles();
     compactTrees();
     layoutBelts();
@@ -1063,7 +1224,7 @@
     if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
     if (t.id === 'goalIn' && T.setup) { e.preventDefault(); suGoalOk(); }
     else if (t.dataset && t.dataset.sid && t.tagName === 'INPUT') { e.preventDefault(); suConfirm(t.dataset.sid); }
-    else if (t.dataset && t.dataset.cid) { e.preventDefault(); act('su-pick-c', { id: t.dataset.cid }); }
+    else if (t.id === 'pkOtherIn') { e.preventDefault(); t.blur(); }
     else if (t.id === 'addIn') { e.preventDefault(); act('add-next', {}); }
     else if (t.id === 'dlhIn') { e.preventDefault(); t.blur(); }
     else if (t.getAttribute && t.getAttribute('role') === 'button' && t.dataset.a) { e.preventDefault(); t.click(); }
@@ -1301,21 +1462,6 @@
         if (e) e.stopPropagation();
         if (su.phase !== 'chain') return;
         T.sheet = { type: 'sumins', id: id }; render(); return;
-      case 'su-pick': f = suFind(id); if (!f) return; suPush(); f.n.mins = +v; if (!S.clockSeen) { S.clockSeen = true; save(); } render(); return;
-      case 'su-rep':
-        f = suFind(id); if (!f) return; suPush();
-        f.n.rep = v === 'daily' ? [0, 1, 2, 3, 4, 5, 6] : (v === 'days' ? [new Date().getDay()] : null);
-        render(); return;
-      case 'su-repday':
-        f = suFind(id); if (!f || !f.n.rep) return; suPush();
-        (function () { var q = f.n.rep.indexOf(+v); if (q >= 0) { if (f.n.rep.length > 1) f.n.rep.splice(q, 1); } else f.n.rep.push(+v); })();
-        render(); return;
-      case 'su-pick-c':
-        f = suFind(id); if (!f) return;
-        var cv = Math.round(+(document.getElementById('cm-' + id) || {}).value);
-        if (!(cv >= 1)) return;
-        suPush();
-        f.n.mins = Math.min(480, cv); if (!S.clockSeen) { S.clockSeen = true; save(); } T.sheet = null; render(); return;
       case 'su-edit':
         if (su.phase !== 'chain') return;
         f = suFind(id); if (!f || f.n.state !== 'set') return;
