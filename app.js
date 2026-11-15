@@ -877,7 +877,7 @@
         '<div class="pk-reveal' + (pr && pr.length ? ' open' : '') + '" id="pkDaysWrap"><div><div class="pk-in"><div class="pk-bar pk-days" id="pkDays" role="group" tabindex="0"></div><div class="pk-sum" id="pkSum" aria-live="polite"></div></div></div></div></div>' +
         '<button type="button" class="pk-ok" data-a="close">' + esc(tr('good')) + '</button>';
     } else if (sh.type === 'tips') {
-      inner = '<div class="h3">' + esc(tr('tipsTitle')) + '</div><ul class="tips-list"><li>' + esc(tr('tip1')) + '</li><li>' + esc(tr('tip2')) + '</li><li>' + esc(tr('tip3')) + '</li></ul><button type="button" class="b-primary" data-a="close">' + esc(tr('good')) + '</button>';
+      inner = '<div class="h3">' + esc(tr('tipsTitle')) + '</div><ul class="tips-list"><li>' + esc(tr('tip1')) + '</li><li>' + esc(tr('tip2')) + '</li><li>' + esc(tr('tip4')) + '</li><li>' + esc(tr('tip3')) + '</li></ul><button type="button" class="b-primary" data-a="close">' + esc(tr('good')) + '</button>';
     } else if (sh.type === 'day') {
       var row = function (lbl, key, val) { return '<div class="step-row"><span>' + esc(lbl) + '</span><div class="btns"><button type="button" class="mini" data-a="day-' + key + '" data-v="-1" aria-label="-1">−</button><span class="pct">' + fmtHour(val) + '</span><button type="button" class="mini" data-a="day-' + key + '" data-v="1" aria-label="+1">+</button></div></div>'; };
       inner = '<div class="h3">' + esc(tr('dayTitle')) + '</div><div class="small">' + esc(tr('dayNote')) + '</div>' + row(tr('dayStart'), 's', S.day.s) + row(tr('dayEnd'), 'e', S.day.e) + '<button type="button" class="b-primary" data-a="close">' + esc(tr('good')) + '</button>';

@@ -37,6 +37,7 @@ window.STR = {
   tipsTitle: ['How to use this page', '怎么用这一页'],
   tip1: ['Tap a step box to type its description, add steps before or after it, or delete it.', '点击一个任务框后，可以输入该任务的描述，增加该任务上游和下游的任务，或删除该任务框'],
   tip2: ['After typing a step name, tap the clock beside it to set how long it takes and how often it repeats.', '任务名输入后，点击步骤旁的钟表选择此步骤的用时和重复时间'],
+  tip4: ['Tap the blue tag at the top left of a box to change its time.', '点击任务框左上角的蓝色标签，可修改任务时间'],
   tip3: ['Tap the × at the top right of a box to delete it.', '点击右上角叉号删除该框'],
   qFirstS: ['Put the specific steps into the line', '把具体步骤放进产线'],
   qNext: ['What comes before "{p}"?', '做到「{p}」之前，得先？'],
