@@ -876,6 +876,8 @@
         '<div class="pk-grp"><div class="pk-lbl">' + esc(tr('repeat')) + '</div><div class="pk-bar pk-seg" id="pkRep" role="radiogroup" tabindex="0"></div>' +
         '<div class="pk-reveal' + (pr && pr.length ? ' open' : '') + '" id="pkDaysWrap"><div><div class="pk-in"><div class="pk-bar pk-days" id="pkDays" role="group" tabindex="0"></div><div class="pk-sum" id="pkSum" aria-live="polite"></div></div></div></div></div>' +
         '<button type="button" class="pk-ok" data-a="close">' + esc(tr('good')) + '</button>';
+    } else if (sh.type === 'tips') {
+      inner = '<div class="h3">' + esc(tr('tipsTitle')) + '</div><ul class="tips-list"><li>' + esc(tr('tip1')) + '</li><li>' + esc(tr('tip2')) + '</li><li>' + esc(tr('tip3')) + '</li></ul><button type="button" class="b-primary" data-a="close">' + esc(tr('good')) + '</button>';
     } else if (sh.type === 'day') {
       var row = function (lbl, key, val) { return '<div class="step-row"><span>' + esc(lbl) + '</span><div class="btns"><button type="button" class="mini" data-a="day-' + key + '" data-v="-1" aria-label="-1">−</button><span class="pct">' + fmtHour(val) + '</span><button type="button" class="mini" data-a="day-' + key + '" data-v="1" aria-label="+1">+</button></div></div>'; };
       inner = '<div class="h3">' + esc(tr('dayTitle')) + '</div><div class="small">' + esc(tr('dayNote')) + '</div>' + row(tr('dayStart'), 's', S.day.s) + row(tr('dayEnd'), 'e', S.day.e) + '<button type="button" class="b-primary" data-a="close">' + esc(tr('good')) + '</button>';
@@ -1034,7 +1036,7 @@
     var su = T.setup, md = suDepth(su.root), q = suHeading();
     var h = '<div class="group' + (su.phase === 'done' ? ' setup-done' : '') + '">';
     var qs = su.phase === 'done' ? '' : suSub();
-    if (q) h += '<div class="qwrap" data-k="q-' + esc(q) + '" data-d="80"><div class="q">' + esc(q) + '</div>' + (qs ? '<div class="qs">' + esc(qs) + '</div>' : '') + '</div>';
+    if (q) h += '<div class="qwrap" data-k="q-' + esc(q) + '" data-d="80"><div class="q-row"><div class="q">' + esc(q) + '</div><button type="button" class="ghost-sm tips-btn" data-a="su-tips">' + esc(tr('tips')) + '</button></div>' + (qs ? '<div class="qs">' + esc(qs) + '</div>' : '') + '</div>';
     h += '<div class="tree"><div class="tree-in">' + suCol(su.root, null, 0, 1, 0, md) + '</div></div>';
     if (su.phase === 'chain' && suAllSet()) h += '<div class="foot" data-k="gen"><button type="button" class="b-primary" data-a="' + (su.editGid ? 'su-apply' : 'su-gen') + '">' + esc(tr(su.editGid ? 'saveChanges' : 'gen')) + '</button></div>';
     if (su.phase === 'done') h += '<div class="foot" data-k="donemsg" data-d="' + ((md + 1) * 150 + 300) + '"><span class="done-msg">' + esc(tr('live')) + '</span></div>';
@@ -1458,6 +1460,7 @@
         suPush();
         (function () { var at = f.p.needs.indexOf(f.n); Array.prototype.splice.apply(f.p.needs, [at, 1].concat(f.n.needs)); })();
         render(suNextFocus()); return;
+      case 'su-tips': T.sheet = { type: 'tips' }; render(); return;
       case 'su-mins':
         if (e) e.stopPropagation();
         if (su.phase !== 'chain') return;
