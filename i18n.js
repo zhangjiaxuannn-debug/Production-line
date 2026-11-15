@@ -133,7 +133,7 @@ window.STR = {
   daily: ['Daily', '每天'],
   minPh: ['Minutes', '分钟'],
   otherSeg: ['Other', '其他'],
-  notSure: ['NA', '不适用'],
+  notSure: ['Skip', '不适用'],
   everyDay: ['Every day', '每天'],
   weekdays: ['Weekdays', '工作日'],
   weekends: ['Weekends', '周末'],
