@@ -1,7 +1,6 @@
 /* All user-facing text. en first, zh second. {x} placeholders. */
 window.STR = {
   app: ['Production line', '生产线'],
-  tagline: ['Break a hard task into small steps you can do.', '把一件难做的事，拆成一步步能做的小事。'],
   titleTag: ['Break big tasks into small steps', '把难做的事拆成小步骤'],
   lines: ['Your lines', '你的产线'],
   doneLabel: ['COMPLETED', '已完成'],
