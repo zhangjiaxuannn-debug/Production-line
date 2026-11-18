@@ -391,6 +391,16 @@
   /* ---------- schedule (real clock) ---------- */
   var PPM = 3, COLORS = ['#142A6E', '#1A1D21', '#5C6166', '#FF8000'];
   function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function dlText(su, h) { return su.date ? fmtDate(su.date, true) + (h != null ? ', ' + fmtHour(h) : '') : tr('pickDate'); }
+  function dlhParse(tv, cur) {
+    var mm = /^(\d{1,2})(?::?(\d{2}))?\s*([ap])?m?$/i.exec(tv);
+    if (!tv) return null;
+    if (!mm) return undefined;
+    var hv = +mm[1], ap = (mm[3] || '').toLowerCase();
+    if (!ap && S.fmt === '12' && hv >= 1 && hv <= 12) ap = (cur != null && cur >= 12) ? 'p' : 'a';
+    if (ap === 'p' && hv < 12) hv += 12; else if (ap === 'a' && hv === 12) hv = 0;
+    return hv >= 0 && hv <= 23 ? hv : undefined;
+  }
   function fmtHour(h) {
     if (S.fmt === '12') { var x = h % 24, hh = x % 12 === 0 ? 12 : x % 12; return hh + ' ' + (x < 12 ? 'AM' : 'PM'); }
     return pad(h) + ':00';
@@ -979,7 +989,7 @@
       h += '<fieldset data-k="dlq" data-d="140" data-leave style="margin-top:14px"><legend>' + esc(tr('dlQ')) + '</legend><div class="opts">' +
         '<button type="button" class="opt" data-a="su-dl-no"><span class="opt-t">' + esc(tr('dlNo')) + '</span><span class="opt-s">' + esc(tr('dlNoS')) + '</span></button>' +
         '<button type="button" class="opt' + (su.dlPick ? ' sel' : '') + '" aria-pressed="' + su.dlPick + '" data-a="su-dl-yes"><span class="opt-t">' + esc(tr('dlYes')) + '</span><span class="opt-s">' + esc(tr('dlYesS')) + '</span></button></div>';
-      if (su.dlPick) h += '<div class="sub" style="margin-top:4px" data-k="dll">' + esc(tr('dlLabel')) + '</div>' + calHtml(su) + '<div class="step-row dl-h" data-k="dlhr"><span>' + esc(tr('dlHour')) + '</span><div class="btns"><button type="button" class="mini" data-a="su-dlh" data-v="-1" aria-label="-1">−</button><input id="dlhIn" class="field dlh-in" type="text" inputmode="numeric" maxlength="2" autocomplete="off" enterkeyhint="done" aria-label="' + esc(tr('dlHour')) + '" placeholder="' + (S.fmt === '12' ? '1-12' : '0-23') + '" value="' + (su.dlh == null ? '' : (S.fmt === '12' ? (su.dlh % 12 || 12) : su.dlh)) + '"><button type="button" class="mini" data-a="su-dlh" data-v="1" aria-label="+1">+</button></div></div>' + (S.fmt === '12' ? '<div class="ampm-row" data-k="dlap"><div class="vt" role="group"><button type="button" class="' + (su.dlh != null && su.dlh < 12 ? 'sel' : '') + '" aria-pressed="' + (su.dlh != null && su.dlh < 12) + '" data-a="su-ampm" data-v="am">AM</button><button type="button" class="' + (su.dlh != null && su.dlh >= 12 ? 'sel' : '') + '" aria-pressed="' + (su.dlh != null && su.dlh >= 12) + '" data-a="su-ampm" data-v="pm">PM</button></div></div>' : '') + '<div class="date-row" data-k="dlr"><div class="cal-sel">' + esc(su.date ? fmtDate(su.date, true) : tr('pickDate')) + '</div><button type="button" id="dlGo" class="b-primary" data-a="su-dl-go"' + (su.date ? '' : ' disabled') + '>' + esc(tr('cont')) + '</button></div>';
+      if (su.dlPick) h += '<div class="sub" style="margin-top:4px" data-k="dll">' + esc(tr('dlLabel')) + '</div>' + calHtml(su) + '<div class="step-row dl-h" data-k="dlhr"><span>' + esc(tr('dlHour')) + '</span><div class="btns"><button type="button" class="mini" data-a="su-dlh" data-v="-1" aria-label="-1">−</button><input id="dlhIn" class="field dlh-in" type="text" inputmode="numeric" maxlength="2" autocomplete="off" enterkeyhint="done" aria-label="' + esc(tr('dlHour')) + '" placeholder="' + (S.fmt === '12' ? '1-12' : '0-23') + '" value="' + (su.dlh == null ? '' : (S.fmt === '12' ? (su.dlh % 12 || 12) : su.dlh)) + '"><button type="button" class="mini" data-a="su-dlh" data-v="1" aria-label="+1">+</button></div></div>' + (S.fmt === '12' ? '<div class="ampm-row" data-k="dlap"><div class="vt" role="group"><button type="button" class="' + (su.dlh != null && su.dlh < 12 ? 'sel' : '') + '" aria-pressed="' + (su.dlh != null && su.dlh < 12) + '" data-a="su-ampm" data-v="am">AM</button><button type="button" class="' + (su.dlh != null && su.dlh >= 12 ? 'sel' : '') + '" aria-pressed="' + (su.dlh != null && su.dlh >= 12) + '" data-a="su-ampm" data-v="pm">PM</button></div></div>' : '') + '<div class="date-row" data-k="dlr"><div class="cal-sel">' + esc(dlText(su, su.dlh)) + '</div><button type="button" id="dlGo" class="b-primary" data-a="su-dl-go"' + (su.date ? '' : ' disabled') + '>' + esc(tr('cont')) + '</button></div>';
       h += '</fieldset>';
     }
     return h + '</div></div>';
@@ -1196,20 +1206,14 @@
       return;
     }
     if (t.id === 'renIn' && T.sheet && T.sheet.type === 'node') { var rf = findNode(T.sheet.id); if (rf && t.value.trim()) { rf.n.text = t.value; save(); } return; }
-    if (t.id === 'dlhIn') { var dg = t.value.replace(/[^0-9]/g, '').slice(0, 2); if (dg !== t.value) t.value = dg; return; }
+    if (t.id === 'dlhIn') { var dg = t.value.replace(/[^0-9]/g, '').slice(0, 2); if (dg !== t.value) t.value = dg; if (T.setup) { var lv = dlhParse(dg, T.setup.dlh), cs = document.querySelector('.date-row .cal-sel'); if (cs) cs.textContent = dlText(T.setup, lv === undefined ? T.setup.dlh : lv); } return; }
     if (t.id === 'addIn' && T.sheet) { T.sheet.text = t.value; var gb = document.getElementById('addGo'); if (gb) gb.disabled = !t.value.trim(); Array.prototype.forEach.call(document.querySelectorAll('.addGate'), function (b) { b.disabled = !t.value.trim(); }); }
   });
   app.addEventListener('change', function (e) {
     var t = e.target;
     if (t.id === 'dlhIn' && T.setup) {
-      var tv = t.value.trim(), mm = /^(\d{1,2})(?::?(\d{2}))?\s*([ap])?m?$/i.exec(tv);
-      if (!tv) T.setup.dlh = null;
-      else if (mm) {
-        var hv = +mm[1], ap = (mm[3] || '').toLowerCase();
-        if (!ap && S.fmt === '12' && hv >= 1 && hv <= 12) ap = (T.setup.dlh != null && T.setup.dlh >= 12) ? 'p' : 'a';
-        if (ap === 'p' && hv < 12) hv += 12; else if (ap === 'a' && hv === 12) hv = 0;
-        if (hv >= 0 && hv <= 23) T.setup.dlh = hv;
-      }
+      var pv = dlhParse(t.value.trim(), T.setup.dlh);
+      if (pv !== undefined) T.setup.dlh = pv;
       render(); return;
     }
     if (t.id === 'dlIn' && T.setup) { T.setup.date = t.value; var g = document.getElementById('dlGo'); if (g) g.disabled = !t.value; }
