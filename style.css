@@ -530,3 +530,6 @@ legend { padding: 0; margin-bottom: 10px; font-size: 17px; font-weight: 700; }
 .tips-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 10px; font-size: 15px; line-height: 1.5; }
 .tree .col, .tree .col.m { padding-left: 16px; padding-right: 16px; }
 
+
+/* home: cards can be held to delete, so no text selection or iOS callout */
+.gcard { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }

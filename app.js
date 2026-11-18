@@ -876,6 +876,9 @@
         '<div class="pk-grp"><div class="pk-lbl">' + esc(tr('repeat')) + '</div><div class="pk-bar pk-seg" id="pkRep" role="radiogroup" tabindex="0"></div>' +
         '<div class="pk-reveal' + (pr && pr.length ? ' open' : '') + '" id="pkDaysWrap"><div><div class="pk-in"><div class="pk-bar pk-days" id="pkDays" role="group" tabindex="0"></div><div class="pk-sum" id="pkSum" aria-live="polite"></div></div></div></div></div>' +
         '<button type="button" class="pk-ok" data-a="close">' + esc(tr('good')) + '</button>';
+    } else if (sh.type === 'hdel') {
+      f = gById(sh.id); if (!f) return '';
+      inner = '<div class="preview">' + esc(f.title) + '</div><div class="h3">' + esc(tr('delAsk')) + '</div><div class="btns"><button type="button" class="b-primary" data-a="hdel-yes" data-id="' + f.id + '">' + esc(tr('del')) + '</button><button type="button" class="b-outline" data-a="close">' + esc(tr('cancel')) + '</button></div>';
     } else if (sh.type === 'tips') {
       inner = '<div class="h3">' + esc(tr('tipsTitle')) + '</div><ul class="tips-list"><li>' + esc(tr('tip1')) + '</li><li>' + esc(tr('tip2')) + '</li><li>' + esc(tr('tip4')) + '</li><li>' + esc(tr('tip3')) + '</li></ul><button type="button" class="b-primary" data-a="close">' + esc(tr('good')) + '</button>';
     } else if (sh.type === 'day') {
@@ -1237,6 +1240,30 @@
   });
   function suGoalOk() { var su = T.setup; if (!su || !su.goal.trim() || su.phase !== 'goal') return; suPush(); su.phase = 'deadline'; render(); }
 
+  /* home: hold a line card (touch or left mouse button) or right-click it to delete it */
+  var lp = { timer: 0, x: 0, y: 0 };
+  function lpAsk(card) {
+    if (T.screen !== 'list' || T.sheet || !card) return;
+    T.noClick = Date.now();
+    T.sheet = { type: 'hdel', id: card.dataset.id };
+    try { if (navigator.vibrate) navigator.vibrate(12); } catch (x) {}
+    render();
+  }
+  function lpStop() { if (lp.timer) { clearTimeout(lp.timer); lp.timer = 0; } }
+  app.addEventListener('pointerdown', function (e) {
+    var card = e.target.closest ? e.target.closest('.gcard[data-a="open"]') : null;
+    lpStop();
+    if (!card || T.screen !== 'list' || T.sheet || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    lp.x = e.clientX; lp.y = e.clientY;
+    lp.timer = setTimeout(function () { lp.timer = 0; lpAsk(card); }, 600);
+  });
+  app.addEventListener('pointermove', function (e) { if (lp.timer && (Math.abs(e.clientX - lp.x) > 8 || Math.abs(e.clientY - lp.y) > 8)) lpStop(); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (t) { app.addEventListener(t, lpStop); });
+  window.addEventListener('scroll', lpStop, true);
+  app.addEventListener('contextmenu', function (e) {
+    var card = e.target.closest ? e.target.closest('.gcard[data-a="open"]') : null;
+    if (card) { e.preventDefault(); lpStop(); lpAsk(card); }
+  });
   app.addEventListener('click', function (e) {
     var el = e.target.closest('[data-a]');
     if (!el) return;
@@ -1297,6 +1324,11 @@
           });
           delete g.nodes[id]; clearTimerFor(id);
         })();
+        T.sheet = null; save(); break;
+      case 'hdel-yes':
+        S.goals = S.goals.filter(function (g) { return g.id !== id; });
+        if (S.timer && !findNode(S.timer.id)) S.timer = null;
+        if (S.cur === id) S.cur = null;
         T.sheet = null; save(); break;
       case 'del-yes':
         S.goals = S.goals.filter(function (g) { return g.id !== S.cur; });
