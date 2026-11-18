@@ -369,6 +369,12 @@
       box.style.translate = (xm - g.offsetWidth / 2) + 'px 0';
     });
   }
+  function setCenter(id) {
+    T.centerId = id;
+    T.clicks = (T.clicks || []).filter(function (x) { return x !== id; });
+    T.clicks.push(id);
+    if (T.clicks.length > 20) T.clicks.shift();
+  }
   function fitTitles() {
     var list = document.querySelectorAll('.h1[data-k="h1"]');
     for (var i = 0; i < list.length; i++) {
@@ -1152,7 +1158,7 @@
         if (sel && sel[0] != null && el.setSelectionRange) { try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} }
       }
     }
-    if (!T.centerId && focusId && String(focusId).indexOf('in-') === 0) T.centerId = String(focusId).slice(3);
+    if (!T.centerId && focusId && String(focusId).indexOf('in-') === 0) setCenter(String(focusId).slice(3));
     if (T.centerId && T.screen === 'setup' && T.setup && T.setup.phase === 'chain') {
       var cid = T.centerId; T.centerId = null;
       setTimeout(function () {
@@ -1230,7 +1236,7 @@
   app.addEventListener('focusin', function (e) {
     var t = e.target, su = T.setup;
     if (!su || !t.dataset || !t.dataset.sid || su.focus === t.dataset.sid) return;
-    su.focus = t.dataset.sid; su.sel = null; T.centerId = t.dataset.sid; render();
+    su.focus = t.dataset.sid; su.sel = null; setCenter(t.dataset.sid); render();
   });
   app.addEventListener('keydown', function (e) {
     var t = e.target;
@@ -1499,6 +1505,10 @@
         if (f.p.id === 'root' && f.p.needs.length === 1 && !f.n.needs.length) return;
         suPush();
         (function () { var at = f.p.needs.indexOf(f.n); Array.prototype.splice.apply(f.p.needs, [at, 1].concat(f.n.needs)); })();
+        (function () {
+          T.clicks = (T.clicks || []).filter(function (x) { return x !== id; });
+          for (var q = T.clicks.length - 1; q >= 0; q--) { if (suFind(T.clicks[q])) { T.centerId = T.clicks[q]; break; } }
+        })();
         render(suNextFocus()); return;
       case 'su-tips': T.sheet = { type: 'tips' }; render(); return;
       case 'su-mins':
@@ -1508,9 +1518,9 @@
       case 'su-edit':
         if (su.phase !== 'chain') return;
         f = suFind(id); if (!f || f.n.state !== 'set') return;
-        if (su.sel !== id) { su.sel = id; T.centerId = id; render(); return; }
+        if (su.sel !== id) { su.sel = id; setCenter(id); render(); return; }
         suPush();
-        f.n.state = 'draft'; su.focus = f.n.id; su.sel = null; T.centerId = f.n.id; render('in-' + f.n.id); return;
+        f.n.state = 'draft'; su.focus = f.n.id; su.sel = null; setCenter(f.n.id); render('in-' + f.n.id); return;
       case 'line-edit':
         (function () { var lg = gById(S.cur); if (!lg) return; save(); T.setup = suFromGoal(lg); T.screen = 'setup'; T.sheet = null; T.msg = ''; })();
         break;
