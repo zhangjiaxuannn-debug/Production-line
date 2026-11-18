@@ -533,3 +533,6 @@ legend { padding: 0; margin-bottom: 10px; font-size: 17px; font-weight: 700; }
 
 /* home: cards can be held to delete, so no text selection or iOS callout */
 .gcard { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+
+/* Build the line button: deep blue block, white text */
+.foot .b-primary:not(:disabled) { background: var(--accent); color: var(--on-accent); }
