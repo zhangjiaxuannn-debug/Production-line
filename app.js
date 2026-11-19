@@ -85,7 +85,7 @@
   }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
   S = load();
-  T.scrollNow = S.home === 'time';
+  T.scrollNow = false;
 
   function tr(key, vars) {
     var e = window.STR[key]; if (!e) return key;
@@ -578,7 +578,6 @@
     });
     var sb = S.goals.filter(function (g) { return g.status === 'standby'; });
     var h = '<main class="list"><div class="top"><span class="eyebrow">' + esc(tr('app')) + '</span><div class="top-r"><button type="button" class="ghost-sm" data-a="open-settings">' + esc(tr('settings')) + '</button></div></div>';
-    h += '<h1 class="list-h">' + esc(tr('lines')) + '</h1>';
     h += '<div class="vt tabs" role="group"><button type="button" class="' + (S.home !== 'time' ? 'sel' : '') + '" aria-pressed="' + (S.home !== 'time') + '" data-a="home-tab" data-v="lines">' + esc(tr('tabLines')) + '</button><button type="button" class="' + (S.home === 'time' ? 'sel' : '') + '" aria-pressed="' + (S.home === 'time') + '" data-a="home-tab" data-v="time">' + esc(tr('tabTime')) + '</button></div>';
     if (S.home === 'time') return h + vTimeline(null) + '<div style="height:48px"></div></main>';
     if (!S.goals.length) h += '<div class="small">' + esc(tr('noGoals')) + '</div>';
@@ -1308,7 +1307,7 @@
     switch (a) {
       /* navigation */
       case 'home': T.screen = 'list'; T.sheet = null; T.msg = ''; T.setup = null; break;
-      case 'open': S.cur = id; T.screen = 'line'; T.msg = ''; T.scrollNow = S.view === 'time'; save(); break;
+      case 'open': S.cur = id; T.screen = 'line'; T.msg = ''; T.scrollNow = false; save(); break;
       case 'draft-open':
         (function () {
           var d = S.drafts.find(function (x) { return x.id === id; }); if (!d) return;
@@ -1322,13 +1321,13 @@
       case 'set-lang': S.lang = v === 'zh' ? 'zh' : 'en'; save(); break;
       case 'set-fmt': S.fmt = v === '12' ? '12' : '24'; save(); break;
       case 'lang': S.lang = S.lang === 'zh' ? 'en' : 'zh'; save(); break;
-      case 'view': S.view = v === 'full' ? 'full' : (v === 'time' ? 'time' : 'focus'); T.scrollNow = S.view === 'time'; save(); break;
+      case 'view': S.view = v === 'full' ? 'full' : (v === 'time' ? 'time' : 'focus'); T.scrollNow = false; save(); break;
       case 'pause-today':
         S.pause = ''; S.frozen = {};
         buildSchedule().forEach(function (b) { if (!b.unfit) S.frozen[b.n.id] = [b.start, b.end]; });
         S.pause = todayKey(); save(); break;
       case 'resume-today': S.pause = ''; S.frozen = {}; save(); break;
-      case 'home-tab': S.home = v === 'time' ? 'time' : 'lines'; T.scrollNow = S.home === 'time'; save(); break;
+      case 'home-tab': S.home = v === 'time' ? 'time' : 'lines'; T.scrollNow = false; save(); break;
       case 'day-open': T.sheet = { type: 'day' }; break;
       case 'day-on': S.dayOn = v !== '0'; save(); break;
       case 'day-s': S.day.s = Math.max(0, Math.min(S.day.e - 1, S.day.s + (+v))); save(); break;
