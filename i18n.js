@@ -8,7 +8,7 @@ window.STR = {
   newGoal: ['+ New line', '+ 新产线'],
   noGoals: ['No lines yet', '还没有产线'],
   nowIs: ['Now: {x}', '现在：{x}'],
-  allDone: ['All done', '全部完成'],
+  allDone: ['All steps done', '所有步骤已完成'],
   daysLeft: ['{n} days til deadline', '还有 {n} 天'],
   dayLeft: ['1 day til deadline', '还有 1 天'],
   hoursLeft: ['{n} h til deadline', '还剩 {n} 小时'],
