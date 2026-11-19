@@ -375,6 +375,10 @@
     T.clicks.push(id);
     if (T.clicks.length > 20) T.clicks.shift();
   }
+  function dayToggle() {
+    var on = S.dayOn !== false;
+    return '<div class="vt" role="group"><button type="button" class="' + (on ? 'sel' : '') + '" aria-pressed="' + on + '" data-a="day-on" data-v="1">' + esc(tr('on')) + '</button><button type="button" class="' + (on ? '' : 'sel') + '" aria-pressed="' + (!on) + '" data-a="day-on" data-v="0">' + esc(tr('off')) + '</button></div>';
+  }
   function fitTitles() {
     var list = document.querySelectorAll('.h1[data-k="h1"]');
     for (var i = 0; i < list.length; i++) {
@@ -444,11 +448,12 @@
   function fitTime(t, mins) {
     for (var k = 0; k < 400; k++) {
       var d = new Date(t);
-      var ws = new Date(d.getFullYear(), d.getMonth(), d.getDate(), S.day.s).getTime();
-      var we = new Date(d.getFullYear(), d.getMonth(), d.getDate(), S.day.e).getTime();
+      var ds = S.dayOn === false ? 0 : S.day.s, de = S.dayOn === false ? 24 : S.day.e;
+      var ws = new Date(d.getFullYear(), d.getMonth(), d.getDate(), ds).getTime();
+      var we = new Date(d.getFullYear(), d.getMonth(), d.getDate(), de).getTime();
       if (t < ws) t = ws;
       if (mins * 60000 > we - ws || t + mins * 60000 <= we) return t;
-      t = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, S.day.s).getTime();
+      t = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, ds).getTime();
     }
     return t;
   }
@@ -596,7 +601,7 @@
     h += '<h1 class="list-h">' + esc(tr('settings')) + '</h1>';
     h += '<section class="set"><div class="set-l">' + esc(tr('language')) + '</div><div class="chips">' + chip('English', S.lang === 'en', 'set-lang', 'en') + chip('中文', S.lang === 'zh', 'set-lang', 'zh') + '</div></section>';
     h += '<section class="set"><div class="set-l">' + esc(tr('timeFmt')) + '</div><div class="chips">' + chip(tr('fmt24'), S.fmt === '24', 'set-fmt', '24') + chip(tr('fmt12'), S.fmt === '12', 'set-fmt', '12') + '</div></section>';
-    h += '<section class="set"><div class="set-l">' + esc(tr('dayTitle')) + '</div><div class="small">' + esc(tr('dayNote')) + '</div>' + row(tr('dayStart'), 's', S.day.s) + row(tr('dayEnd'), 'e', S.day.e) + '</section>';
+    h += '<section class="set"><div class="set-l day-h"><span>' + esc(tr('dayTitle')) + '</span>' + dayToggle() + '</div><div class="small">' + esc(tr('dayNote')) + '</div>' + (S.dayOn === false ? '<div class="small">' + esc(tr('dayOffNote')) + '</div>' : row(tr('dayStart'), 's', S.day.s) + row(tr('dayEnd'), 'e', S.day.e)) + '</section>';
     h += '<section class="set"><div class="set-l">' + esc(tr('backup')) + '</div><button type="button" class="b-outline" data-a="backup">' + esc(tr('bkTitle')) + '</button></section>';
     return h + '<div style="height:48px"></div></main>';
   }
@@ -898,7 +903,7 @@
       inner = '<div class="h3">' + esc(tr('tipsTitle')) + '</div><ul class="tips-list"><li>' + esc(tr('tip1')) + '</li><li>' + esc(tr('tip2')) + '</li><li>' + esc(tr('tip4')) + '</li><li>' + esc(tr('tip3')) + '</li></ul><button type="button" class="b-primary" data-a="close">' + esc(tr('good')) + '</button>';
     } else if (sh.type === 'day') {
       var row = function (lbl, key, val) { return '<div class="step-row"><span>' + esc(lbl) + '</span><div class="btns"><button type="button" class="mini" data-a="day-' + key + '" data-v="-1" aria-label="-1">−</button><span class="pct">' + fmtHour(val) + '</span><button type="button" class="mini" data-a="day-' + key + '" data-v="1" aria-label="+1">+</button></div></div>'; };
-      inner = '<div class="h3">' + esc(tr('dayTitle')) + '</div><div class="small">' + esc(tr('dayNote')) + '</div>' + row(tr('dayStart'), 's', S.day.s) + row(tr('dayEnd'), 'e', S.day.e) + '<button type="button" class="b-primary" data-a="close">' + esc(tr('good')) + '</button>';
+      inner = '<div class="h3 day-h"><span>' + esc(tr('dayTitle')) + '</span>' + dayToggle() + '</div><div class="small">' + esc(tr('dayNote')) + '</div>' + (S.dayOn === false ? '<div class="small">' + esc(tr('dayOffNote')) + '</div>' : row(tr('dayStart'), 's', S.day.s) + row(tr('dayEnd'), 'e', S.day.e)) + '<button type="button" class="b-primary" data-a="close">' + esc(tr('good')) + '</button>';
     } else if (sh.type === 'backup') {
       inner = '<div class="h3">' + esc(tr('bkTitle')) + '</div><button type="button" class="b-primary" data-a="bk-export">' + esc(tr('bkExport')) + '</button><button type="button" class="b-outline" data-a="bk-copy">' + esc(sh.copied ? tr('bkCopied') : tr('bkCopy')) + '</button><button type="button" class="b-outline" data-a="bk-import">' + esc(tr('bkImport')) + '</button>';
       if (sh.err) inner += '<div class="small">' + esc(tr('bkBad')) + '</div>';
@@ -1309,6 +1314,7 @@
       case 'resume-today': S.pause = ''; S.frozen = {}; save(); break;
       case 'home-tab': S.home = v === 'time' ? 'time' : 'lines'; T.scrollNow = S.home === 'time'; save(); break;
       case 'day-open': T.sheet = { type: 'day' }; break;
+      case 'day-on': S.dayOn = v !== '0'; save(); break;
       case 'day-s': S.day.s = Math.max(0, Math.min(S.day.e - 1, S.day.s + (+v))); save(); break;
       case 'day-e': S.day.e = Math.min(24, Math.max(S.day.s + 1, S.day.e + (+v))); save(); break;
       case 'new-goal': T.setup = suNew(); T.screen = 'setup'; render('goalIn'); return;

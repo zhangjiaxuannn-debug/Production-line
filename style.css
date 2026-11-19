@@ -536,3 +536,6 @@ legend { padding: 0; margin-bottom: 10px; font-size: 17px; font-weight: 700; }
 
 /* Build the line button: deep blue block, white text */
 .foot .b-primary:not(:disabled) { background: var(--accent); color: var(--on-accent); }
+
+/* Your day: title with an On / Off switch */
+.day-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
