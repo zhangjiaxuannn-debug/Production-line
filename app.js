@@ -1176,7 +1176,15 @@
       setTimeout(function () {
         try {
           var bx = document.querySelector('[data-k="b-' + cid + '"]');
-          if (bx) bx.scrollIntoView({ block: 'center', inline: 'center', behavior: reduce ? 'auto' : 'smooth' });
+          if (bx) {
+            var bm = reduce ? 'auto' : 'smooth', tr0 = document.getElementById('tree'), br = bx.getBoundingClientRect();
+            if (tr0) {
+              var tb = tr0.getBoundingClientRect(), dx = (br.left + br.width / 2) - (tb.left + tb.width / 2);
+              if (Math.abs(dx) > 48) tr0.scrollTo({ left: tr0.scrollLeft + dx, behavior: bm });
+            }
+            var vh = window.visualViewport ? window.visualViewport.height : window.innerHeight, dy = (br.top + br.height / 2) - vh / 2;
+            if (Math.abs(dy) > 48) window.scrollBy({ top: dy, behavior: bm });
+          }
         } catch (e) {}
       }, 460);
     }
