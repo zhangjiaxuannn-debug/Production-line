@@ -109,7 +109,8 @@ window.STR = {
   live: ['Line is live', '开工了'],
   openLine: ['Open line', '进入产线'],
   tipK: ['Did you know?', '你知道吗？'],
-  product: ['GOAL', '终产物'],
+  product: ['END PRODUCT', '终产物'],
+  prodCompleted: ['Completed', '已完成'],
 
   focus: ['Focus', '专注'],
   full: ['Full', '全线'],
@@ -184,7 +185,7 @@ window.STR = {
   delStep: ['Delete step', '删除步骤'],
   delStepAsk: ['Delete this step? Its prior steps move up.', '删除这一步？它的前置步骤会上移。'],
   delLast: ['A line needs at least one step.', '产线至少要留一步。'],
-  delAsk: ['Delete this goal?', '删除这个目标？'],
+  delAsk: ['Delete this line?', '删除这条产线？'],
 
   bkTitle: ['Backup', '备份'],
   bkExport: ['Export file', '导出文件'],
@@ -193,7 +194,7 @@ window.STR = {
   bkImport: ['Import file', '导入文件'],
   bkReplaceQ: ['Replace all data on this device?', '用这份备份覆盖现有数据？'],
   bkReplace: ['Replace', '覆盖'],
-  bkInfo: ['{n} goals in file', '文件里有 {n} 个目标'],
+  bkInfo: ['{n} lines in file', '文件里有 {n} 条产线'],
   bkBad: ['Not a backup file', '不是备份文件'],
   bkDone: ['Imported', '已导入'],
 

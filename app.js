@@ -636,7 +636,7 @@
   }
   function prodHtml(g, wide) {
     var p = progress(g);
-    var h = '<div class="prod-wrap"' + (wide ? ' style="width:100%"' : '') + '><div class="bx prod"' + (wide ? ' style="width:100%"' : '') + '><span class="k">' + esc(tr('product')) + '</span><span class="t">' + esc(g.title) + '</span>' + (goalDone(g) ? '<span class="pdone">' + esc(tr('done')) + '</span>' : '') + '<i class="fill" style="width:' + p.pct + '%"></i></div>';
+    var h = '<div class="prod-wrap"' + (wide ? ' style="width:100%"' : '') + '><div class="bx prod"' + (wide ? ' style="width:100%"' : '') + '><span class="k">' + esc(tr('product')) + '</span><span class="t">' + esc(g.title) + '</span>' + (goalDone(g) ? '<span class="pdone">' + esc(tr('prodCompleted')) + '</span>' : '') + '<i class="fill" style="width:' + p.pct + '%"></i></div>';
     return h + '</div>';
   }
   function vFocus(g) {
