@@ -621,7 +621,6 @@
       '<div class="lbl">' + esc(n.text) + '</div>';
     if (rec) h += '<div class="mins">' + esc(repLabel(n)) + '</div>';
     if (n.prevMins) h += '<span class="adj chg">' + minsHtml(n) + '</span>';
-    if (n.tag) h += '<span class="adj">' + esc(n.tag === 'spread' ? tr('spread') : n.tag) + '</span>';
     if (st === 'pause') h += '<div class="paused"><span>' + esc(tr('paused')) + '</span><button type="button" class="mini" data-a="timer-reset" data-id="' + n.id + '">' + esc(tr('resetTimer')) + '</button></div>';
     h += '<div class="btns"><button type="button" class="b b-navy b-done" data-a="done" data-id="' + n.id + '">' + esc(tr('done')) + '</button><button type="button" class="b b-line" data-a="miss" data-id="' + n.id + '">' + esc(tr('miss')) + '</button></div>' +
       '<div class="btns"><button type="button" class="b b-split" data-a="edit" data-id="' + n.id + '">' + esc(tr('edit')) + '</button></div></div></div>';
