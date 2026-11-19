@@ -541,5 +541,5 @@ legend { padding: 0; margin-bottom: 10px; font-size: 17px; font-weight: 700; }
 .day-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
 /* home: Lines / Schedule switch is bigger and fills the width */
-.vt.tabs { align-self: stretch; width: 100%; margin: 10px 0 14px; }
+.vt.tabs { align-self: center; width: min(100%, 280px); margin: 10px auto 14px; }
 .vt.tabs button { flex: 1; min-height: 48px; font-size: 16px; }
