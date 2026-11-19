@@ -23,7 +23,7 @@ window.STR = {
   lang: ['中文', 'English'],
   restart: ['Restart', '重来'],
 
-  goalQ: ['What is the "End Product"\nof this line?', '这条线的「终产物」是什么？'],
+  goalQ: ['What is your goal?', '你的目标是什么？'],
   goalSub: ['Put in something you want to complete.', '写下你想完成的事。'],
   goalPh: ['', ''],
   dlQ: ['Any deadline?', '有截止日期吗？'],
@@ -79,7 +79,7 @@ window.STR = {
   pickDate: ['Pick a day', '选一天'],
   prevMonth: ['Previous month', '上个月'],
   nextMonth: ['Next month', '下个月'],
-  subAdd: ['Break your End Product into steps. What needs to happen right before it?', '把终产物拆成步骤：它的前一步是什么？'],
+  subAdd: ['Break your goal into steps. What needs to happen right before it?', '把目标拆成步骤：它的前一步是什么？'],
   subClock: ['Tap the clock beside a step to set its time.', '点步骤旁边的钟表，设定所需时间。'],
   subMins: ['Tap "+ min" to set how long a step takes', '点「+ 时长」设定每步要多久'],
   setTime: ['Set time', '设定时间'],
@@ -109,7 +109,7 @@ window.STR = {
   live: ['Line is live', '开工了'],
   openLine: ['Open line', '进入产线'],
   tipK: ['Did you know?', '你知道吗？'],
-  product: ['END PRODUCT', '终产物'],
+  product: ['GOAL', '目标'],
   prodCompleted: ['Completed', '已完成'],
 
   focus: ['Focus', '专注'],
@@ -159,7 +159,7 @@ window.STR = {
   msgTiny: ['Just 5 minutes.', '只要 5 分钟。'],
   msgDoneRep: ['Done for today.', '今天的做完了。'],
   msgDone: ['Done.', '做到了。'],
-  msgGoal: ['Goal reached. Great work!', '终产物完成，太棒了！'],
+  msgGoal: ['Goal reached. Great work!', '目标完成，太棒了！'],
 
   addQ: ['What comes before "{x}"?', '做到「{x}」之前，得先？'],
   addPh: ['Write a step', '写一项'],
