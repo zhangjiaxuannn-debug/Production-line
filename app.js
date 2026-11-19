@@ -515,12 +515,14 @@
   function goalColor(g) { var i = S.goals.indexOf(g); return COLORS[(i < 0 ? 0 : i) % COLORS.length]; }
   function vTimeline(fid) {
     var sch = buildSchedule(), now = Date.now();
-    var d0 = new Date(now), t0 = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate()).getTime(), t1 = t0 + 86400000;
+    var dOff = Math.max(0, Math.min(120, T.schedDay || 0)), d0 = new Date(now), t0 = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() + dOff).getTime(), t1 = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() + dOff + 1).getTime();
     var unfit = sch.filter(function (b) { return b.unfit && (!fid || b.g.id === fid); });
     var items = sch.filter(function (b) { return !b.unfit && b.start >= t0 && b.start < t1; });
     T.hidden = sch.filter(function (b) { return !b.unfit && !(b.start >= t0 && b.start < t1); }).map(function (b) { return b.n.id; });
-    var paused = S.pause === todayKey();
-    var h = '<div class="tl-top"><div class="tl-day">' + esc(tr('today')) + '</div><button type="button" class="mini" data-a="' + (paused ? 'resume-today' : 'pause-today') + '">' + esc(paused ? tr('resumeToday') : tr('pauseToday')) + '</button></div>';
+    var paused = dOff === 0 && S.pause === todayKey();
+    var dayLbl = dOff === 0 ? tr('today') : (dOff === 1 ? tr('tomorrowCap') : new Date(t0).toLocaleDateString(S.lang === 'zh' ? 'zh-CN' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
+    var h = '<div class="tl-top"><div class="tl-nav"><span class="tl-day">' + esc(dayLbl) + '</span><button type="button" class="mini tl-pick" data-a="sch-cal">' + esc(tr('pickDate')) + '</button></div>' +
+      (dOff === 0 ? '<button type="button" class="mini" data-a="' + (paused ? 'resume-today' : 'pause-today') + '">' + esc(paused ? tr('resumeToday') : tr('pauseToday')) + '</button>' : '<button type="button" class="mini" data-a="sch-today">' + esc(tr('today')) + '</button>') + '</div>';
     if (paused) h += '<div class="small tl-hint">' + esc(tr('pausedNote')) + '</div>';
     else if (!items.length) h += '<div class="small tl-hint">' + esc(tr('noBlocks')) + '</div>';
     else h += '<div class="small tl-hint">' + esc(tr('holdHint')) + '</div>';
@@ -545,13 +547,14 @@
       h += '<div class="tblock' + (b.locked ? ' locked' : '') + (b.started ? ' started' : '') + (mine ? '' : ' other') + (late ? ' late' : '') + (ht < 34 ? ' tiny' : '') + '" role="button" tabindex="0" data-a="edit" data-id="' + b.n.id + '" style="top:' + top + 'px;height:' + ht + 'px;--c:' + goalColor(b.g) + '">' +
         '<span class="tm">' + hm(b.start) + (b.started ? ' · ' + esc(tr('startedTag')) : '') + (fid ? '' : ' · ' + esc(b.g.title)) + (late ? ' · ' + esc(tr('late')) : '') + '</span><span class="tn">' + esc(b.n.text) + '</span></div>';
     });
-    h += '<div class="tl-now" style="top:' + yOf(now) + 'px"><i></i></div></div>';
+    h += (dOff === 0 ? '<div class="tl-now" style="top:' + yOf(now) + 'px"><i></i></div>' : '') + '</div>';
     if (unfit.length) {
       h += '<div class="unfit"><div class="set-l">' + esc(tr('unfitH')) + '</div><div class="small">' + esc(tr('unfitS')) + '</div>';
       unfit.forEach(function (b) { h += '<div class="unfit-row" role="button" tabindex="0" data-a="edit" data-id="' + b.n.id + '"><span class="tn">' + esc(b.n.text) + '</span><span class="tm">' + esc((fid ? '' : b.g.title + ' · ') + minsLbl(b.n.mins)) + '</span></div>'; });
       h += '</div>';
     }
-    if (T.hidden.length) h += '<div class="small">' + esc(tr('afterToday', { n: T.hidden.length })) + '</div>';
+    var later = sch.filter(function (b) { return !b.unfit && b.start >= t1; }).length;
+    if (later) h += '<div class="small">' + esc(tr(dOff === 0 ? 'afterToday' : 'afterDay', { n: later })) + '</div>';
     return h;
   }
 
@@ -906,6 +909,8 @@
     } else if (sh.type === 'hdel') {
       f = gById(sh.id); if (!f) return '';
       inner = '<div class="preview">' + esc(f.title) + '</div><div class="h3">' + esc(tr('delAsk')) + '</div><div class="btns"><button type="button" class="b-primary" data-a="hdel-yes" data-id="' + f.id + '">' + esc(tr('del')) + '</button><button type="button" class="b-outline" data-a="close">' + esc(tr('cancel')) + '</button></div>';
+    } else if (sh.type === 'schcal') {
+      inner = '<div class="h3">' + esc(tr('pickDate')) + '</div>' + calHtml(T.schCal || (T.schCal = { calY: null, calM: null, date: '' }), 'sch-cal') + '<button type="button" class="b-text" data-a="close">' + esc(tr('close')) + '</button>';
     } else if (sh.type === 'tips') {
       inner = '<div class="h3">' + esc(tr('tipsTitle')) + '</div><ul class="tips-list"><li>' + esc(tr('tip1')) + '</li><li>' + esc(tr('tip2')) + '</li><li>' + esc(tr('tip4')) + '</li><li>' + esc(tr('tip3')) + '</li></ul><button type="button" class="b-primary" data-a="close">' + esc(tr('good')) + '</button>';
     } else if (sh.type === 'day') {
@@ -980,19 +985,20 @@
     var p = key.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]);
     return new Intl.DateTimeFormat(S.lang === 'zh' ? 'zh-CN' : 'en-US', long ? { year: 'numeric', month: 'long', day: 'numeric' } : { year: 'numeric', month: 'short', day: 'numeric' }).format(d);
   }
-  function calHtml(su) {
+  function calHtml(su, pre) {
+    pre = pre || 'su-cal';
     var now = new Date();
     if (su.calY == null) { su.calY = now.getFullYear(); su.calM = now.getMonth(); }
     var first = new Date(su.calY, su.calM, 1), off = (first.getDay() + 6) % 7, dim = new Date(su.calY, su.calM + 1, 0).getDate();
     var title = new Intl.DateTimeFormat(S.lang === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'long' }).format(first);
     var todayKey = ymd(now.getFullYear(), now.getMonth(), now.getDate());
     var atNow = su.calY === now.getFullYear() && su.calM === now.getMonth();
-    var h = '<div class="cal" data-k="cal"><div class="cal-h"><button type="button" class="cal-n" data-a="su-cal-prev" aria-label="' + esc(tr('prevMonth')) + '"' + (atNow ? ' disabled' : '') + '>‹</button><span>' + esc(title) + '</span><button type="button" class="cal-n" data-a="su-cal-next" aria-label="' + esc(tr('nextMonth')) + '">›</button></div><div class="cal-g">';
+    var h = '<div class="cal" data-k="cal"><div class="cal-h"><button type="button" class="cal-n" data-a="' + pre + '-prev" aria-label="' + esc(tr('prevMonth')) + '"' + (atNow ? ' disabled' : '') + '>‹</button><span>' + esc(title) + '</span><button type="button" class="cal-n" data-a="' + pre + '-next" aria-label="' + esc(tr('nextMonth')) + '">›</button></div><div class="cal-g">';
     DAY_ORDER.forEach(function (x) { h += '<span class="cal-w">' + esc(dayName(x)) + '</span>'; });
     for (var i = 0; i < off; i++) h += '<span></span>';
     for (var d = 1; d <= dim; d++) {
       var key = ymd(su.calY, su.calM, d), dis = key < todayKey, sel = key === su.date;
-      h += '<button type="button" class="cal-d' + (sel ? ' sel' : '') + (key === todayKey ? ' now' : '') + '" data-a="su-cal-pick" data-v="' + key + '"' + (dis ? ' disabled' : '') + ' aria-pressed="' + sel + '">' + d + '</button>';
+      h += '<button type="button" class="cal-d' + (sel ? ' sel' : '') + (key === todayKey ? ' now' : '') + '" data-a="' + pre + '-pick" data-v="' + key + '"' + (dis ? ' disabled' : '') + ' aria-pressed="' + sel + '">' + d + '</button>';
     }
     return h + '</div></div>';
   }
@@ -1327,6 +1333,17 @@
         buildSchedule().forEach(function (b) { if (!b.unfit) S.frozen[b.n.id] = [b.start, b.end]; });
         S.pause = todayKey(); save(); break;
       case 'resume-today': S.pause = ''; S.frozen = {}; save(); break;
+      case 'sch-cal': T.schCal = { calY: null, calM: null, date: '' }; T.sheet = { type: 'schcal' }; break;
+      case 'sch-cal-prev': if (T.schCal) { T.schCal.calM--; if (T.schCal.calM < 0) { T.schCal.calM = 11; T.schCal.calY--; } } break;
+      case 'sch-cal-next': if (T.schCal) { T.schCal.calM++; if (T.schCal.calM > 11) { T.schCal.calM = 0; T.schCal.calY++; } } break;
+      case 'sch-cal-pick':
+        (function () {
+          var pp = String(v).split('-'), pd = new Date(+pp[0], +pp[1] - 1, +pp[2]), nw = new Date();
+          T.schedDay = Math.max(0, Math.min(120, Math.round((pd.getTime() - new Date(nw.getFullYear(), nw.getMonth(), nw.getDate()).getTime()) / 86400000)));
+          T.sheet = null; T.schCal = null;
+        })();
+        break;
+      case 'sch-today': T.schedDay = 0; break;
       case 'home-tab': S.home = v === 'time' ? 'time' : 'lines'; T.scrollNow = false; save(); break;
       case 'day-open': T.sheet = { type: 'day' }; break;
       case 'day-on': S.dayOn = v !== '0'; save(); break;

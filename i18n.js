@@ -56,6 +56,8 @@ window.STR = {
   dayStart: ['Starts', '开始'],
   dayEnd: ['Ends', '结束'],
   late: ['After deadline', '超过截止日'],
+  tomorrowCap: ['Tomorrow', '明天'],
+  afterDay: ['{n} more after this day', '这一天之后还有 {n} 项'],
   noBlocks: ['Nothing to schedule yet', '还没有可排的步骤'],
   unfitH: ["CAN'T FIT INTO THE SCHEDULE", '排不进日程'],
   unfitS: ['Not enough time before the deadline for these.', '截止前的时间不够做这些。'],

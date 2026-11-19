@@ -542,4 +542,7 @@ legend { padding: 0; margin-bottom: 10px; font-size: 17px; font-weight: 700; }
 
 /* home: Lines / Schedule switch is bigger and fills the width */
 .vt.tabs { align-self: center; width: min(100%, 280px); margin: 10px auto 14px; }
-.vt.tabs button { flex: 1; min-height: 48px; font-size: 16px; }
+.vt.tabs button { flex: 1; min-height: 38px; font-size: 15px; }
+
+/* schedule: day label and Pick a day */
+.tl-nav { display: flex; align-items: center; gap: 12px; }
