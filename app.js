@@ -695,23 +695,27 @@
   function pkBuzz() { try { if (navigator.vibrate) navigator.vibrate(4); } catch (e) {} }
   function initPicker() {
     if (pkResize) { window.removeEventListener('resize', pkResize); pkResize = null; }
-    var sh = T.sheet; if (!sh || sh.type !== 'sumins') return;
-    var f = suFind(sh.id); if (!f) return;
-    var n = f.n, PRESET = [5, 15, 30, 60];
+    var sh = T.sheet; if (!sh || (sh.type !== 'sumins' && sh.type !== 'node') || !document.getElementById('pkDur')) return;
+    var isNode = sh.type === 'node';
+    var f = isNode ? findNode(sh.id) : suFind(sh.id); if (!f) return;
+    var n = f.n, PRESET = [5, 15, 30, 60], RK = isNode ? 'repeat' : 'rep';
     var st = {
       dur: n.mins == null ? -1 : (n.mins === 0 ? 4 : (PRESET.indexOf(n.mins) >= 0 ? PRESET.indexOf(n.mins) : 4)),
       unsure: n.mins === 0,
-      rep: !n.rep || !n.rep.length ? 0 : (n.rep.length === 7 ? 1 : 2),
-      days: DAY_ORDER.map(function (d) { return !!(n.rep && n.rep.indexOf(d) >= 0); })
+      rep: !n[RK] || !n[RK].length ? 0 : (n[RK].length === 7 ? 1 : 2),
+      days: DAY_ORDER.map(function (d) { return !!(n[RK] && n[RK].indexOf(d) >= 0); })
     };
     function touch() {
+      if (isNode) { n.prevMins = null; return; }
       if (!sh.pushed) { suPush(); sh.pushed = true; }
       if (!S.clockSeen) { S.clockSeen = true; save(); }
     }
+    function commit() { if (isNode) save(); }
     function applyRep() {
       var arr = [];
       st.days.forEach(function (v, i) { if (v) arr.push(DAY_ORDER[i]); });
-      n.rep = st.rep === 0 || !arr.length ? null : arr;
+      n[RK] = st.rep === 0 || !arr.length ? null : arr;
+      commit();
     }
 
     /* single-select bar with a sliding thumb */
@@ -763,21 +767,24 @@
     var dur = makeSeg(document.getElementById('pkDur'), ['5', '15', '30', '60', tr('otherSeg')], function () { return st.dur; }, function (i) {
       touch(); st.dur = i; dur.paint(i);
       if (i < 4) { n.mins = PRESET[i]; st.unsure = false; unsure.setAttribute('aria-pressed', 'false'); otherIn.disabled = false; }
-      else if (n.mins != null && n.mins !== 0 && PRESET.indexOf(n.mins) >= 0) { n.mins = null; otherIn.value = ''; }
+      else if (n.mins != null && n.mins !== 0 && PRESET.indexOf(n.mins) >= 0 && !isNode) { n.mins = null; otherIn.value = ''; }
       otherWrap.classList.toggle('open', i === 4);
+      commit();
     });
     otherIn.addEventListener('input', function () {
       var v = otherIn.value.replace(/[^0-9]/g, '');
       if (v !== otherIn.value) otherIn.value = v;
       touch();
       var m = Math.round(+v);
-      n.mins = m >= 1 ? Math.min(480, m) : null;
+      if (m >= 1) n.mins = Math.min(480, m); else if (!isNode) n.mins = null;
+      commit();
     });
     unsure.addEventListener('click', function () {
       touch(); st.unsure = !st.unsure;
       unsure.setAttribute('aria-pressed', String(st.unsure));
       otherIn.disabled = st.unsure;
-      if (st.unsure) { otherIn.value = ''; n.mins = 0; } else n.mins = null;
+      if (st.unsure) { otherIn.value = ''; n.mins = 0; } else n.mins = isNode ? 15 : null;
+      commit();
     });
 
     /* days: drag to paint */
@@ -851,6 +858,13 @@
     window.addEventListener('resize', pkResize);
   }
 
+  function pickerHtml(pm, pr) {
+    var pOther = pm === 0 || (pm != null && [5, 15, 30, 60].indexOf(pm) < 0);
+      return         '<div class="pk-grp"><div class="pk-lbl">' + esc(tr('minPh')) + '</div><div class="pk-bar pk-seg" id="pkDur" role="radiogroup" tabindex="0"></div>' +
+        '<div class="pk-reveal' + (pOther ? ' open' : '') + '" id="pkOtherWrap"><div><div class="pk-in"><div class="pk-other"><input id="pkOtherIn" inputmode="numeric" autocomplete="off" aria-label="' + esc(tr('minPh')) + '" placeholder="' + esc(tr('minPh')) + '" value="' + (pm > 0 && [5, 15, 30, 60].indexOf(pm) < 0 ? pm : '') + '"' + (pm === 0 ? ' disabled' : '') + '><button type="button" class="pk-unsure" id="pkUnsure" aria-pressed="' + (pm === 0) + '">' + esc(tr('notSure')) + '</button></div></div></div></div></div>' +
+        '<div class="pk-grp"><div class="pk-lbl">' + esc(tr('repeat')) + '</div><div class="pk-bar pk-seg" id="pkRep" role="radiogroup" tabindex="0"></div>' +
+        '<div class="pk-reveal' + (pr && pr.length ? ' open' : '') + '" id="pkDaysWrap"><div><div class="pk-in"><div class="pk-bar pk-days" id="pkDays" role="group" tabindex="0"></div><div class="pk-sum" id="pkSum" aria-live="polite"></div></div></div></div></div>';
+  }
   function vSheet() {
     var sh = T.sheet; if (!sh) return '';
     var inner = '', f;
@@ -874,7 +888,7 @@
       var n = f.n;
       inner = '<label for="renIn" class="small">' + esc(tr('stepText')) + '</label><input id="renIn" class="field" autocomplete="off" enterkeyhint="done" value="' + esc(n.text) + '">';
       if (!isDone(n)) {
-        if (n.start) inner += planHtml(n.mins, sh.repMode, sh.repDays);
+        if (n.start) inner += pickerHtml(n.mins, isRec(n) ? n.repeat : null);
         else inner += '<button type="button" class="b-primary" data-a="make-start-sheet" data-id="' + n.id + '">' + esc(tr('nowBtn')) + '</button>';
         if (isRec(n)) inner += '<button type="button" class="b-outline" data-a="end-repeat" data-id="' + n.id + '">' + esc(tr('endRepeat')) + '</button>';
       }
@@ -888,14 +902,8 @@
       if (sh.confirm) inner += '<div class="h3">' + esc(tr('delAsk')) + '</div><div class="btns"><button type="button" class="b-primary" data-a="del-yes">' + esc(tr('del')) + '</button><button type="button" class="b-outline" data-a="close">' + esc(tr('cancel')) + '</button></div>';
       else inner += '<button type="button" class="b-outline" data-a="' + (f.status === 'standby' ? 'resume' : 'standby') + '" data-id="' + f.id + '">' + esc(f.status === 'standby' ? tr('resume') : tr('toStandby')) + '</button><button type="button" class="b-outline" data-a="del-ask">' + esc(tr('del')) + '</button><button type="button" class="b-text" data-a="close">' + esc(tr('close')) + '</button>';
     } else if (sh.type === 'sumins') {
-      var sf = suFind(sh.id), pm = sf ? sf.n.mins : null, pr = sf ? sf.n.rep : null;
-      var pOther = pm === 0 || (pm != null && [5, 15, 30, 60].indexOf(pm) < 0);
-      inner = '<div class="h3">' + esc(tr('qHow')) + '</div>' +
-        '<div class="pk-grp"><div class="pk-lbl">' + esc(tr('minPh')) + '</div><div class="pk-bar pk-seg" id="pkDur" role="radiogroup" tabindex="0"></div>' +
-        '<div class="pk-reveal' + (pOther ? ' open' : '') + '" id="pkOtherWrap"><div><div class="pk-in"><div class="pk-other"><input id="pkOtherIn" inputmode="numeric" autocomplete="off" aria-label="' + esc(tr('minPh')) + '" placeholder="' + esc(tr('minPh')) + '" value="' + (pm > 0 && [5, 15, 30, 60].indexOf(pm) < 0 ? pm : '') + '"' + (pm === 0 ? ' disabled' : '') + '><button type="button" class="pk-unsure" id="pkUnsure" aria-pressed="' + (pm === 0) + '">' + esc(tr('notSure')) + '</button></div></div></div></div></div>' +
-        '<div class="pk-grp"><div class="pk-lbl">' + esc(tr('repeat')) + '</div><div class="pk-bar pk-seg" id="pkRep" role="radiogroup" tabindex="0"></div>' +
-        '<div class="pk-reveal' + (pr && pr.length ? ' open' : '') + '" id="pkDaysWrap"><div><div class="pk-in"><div class="pk-bar pk-days" id="pkDays" role="group" tabindex="0"></div><div class="pk-sum" id="pkSum" aria-live="polite"></div></div></div></div></div>' +
-        '<button type="button" class="pk-ok" data-a="close">' + esc(tr('good')) + '</button>';
+      var sf = suFind(sh.id);
+      inner = '<div class="h3">' + esc(tr('qHow')) + '</div>' + pickerHtml(sf ? sf.n.mins : null, sf ? sf.n.rep : null) + '<button type="button" class="pk-ok" data-a="close">' + esc(tr('good')) + '</button>';
     } else if (sh.type === 'hdel') {
       f = gById(sh.id); if (!f) return '';
       inner = '<div class="preview">' + esc(f.title) + '</div><div class="h3">' + esc(tr('delAsk')) + '</div><div class="btns"><button type="button" class="b-primary" data-a="hdel-yes" data-id="' + f.id + '">' + esc(tr('del')) + '</button><button type="button" class="b-outline" data-a="close">' + esc(tr('cancel')) + '</button></div>';
@@ -911,7 +919,7 @@
     } else if (sh.type === 'import') {
       inner = '<div class="h3">' + esc(tr('bkReplaceQ')) + '</div><div class="small">' + esc(tr('bkInfo', { n: sh.data.goals.length })) + '</div><div class="btns"><button type="button" class="b-primary" data-a="bk-replace">' + esc(tr('bkReplace')) + '</button><button type="button" class="b-outline" data-a="close">' + esc(tr('cancel')) + '</button></div>';
     }
-    return '<div class="scrim" data-a="scrim"><div class="sheet' + (sh.type === 'sumins' ? ' pk-sheet' : '') + '" role="dialog" aria-modal="true">' + inner + '</div></div>';
+    return '<div class="scrim" data-a="scrim"><div class="sheet' + (sh.type === 'sumins' || sh.type === 'node' ? ' pk-sheet' : '') + '" role="dialog" aria-modal="true">' + inner + '</div></div>';
   }
 
   /* ---------- setup flow (backward planning) ---------- */
