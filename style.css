@@ -526,7 +526,7 @@ legend { padding: 0; margin-bottom: 10px; font-size: 17px; font-weight: 700; }
 /* setup: hint button next to the title, and room between neighbouring columns for the side + and x */
 .q-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .q-row .q { flex: 1; min-width: 0; }
-.tips-btn { flex-shrink: 0; border: 1px solid var(--line); min-height: 32px; padding: 0 10px; margin-top: 2px; color: var(--ink); }
+.tips-btn { flex-shrink: 0; border: 0; min-height: 32px; padding: 0 4px; margin-top: 2px; color: var(--muted); }
 .tips-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 10px; font-size: 15px; line-height: 1.5; }
 .tree .col, .tree .col.m { padding-left: 16px; padding-right: 16px; }
 
