@@ -14,7 +14,7 @@ window.STR = {
   hoursLeft: ['{n} h til deadline', '还剩 {n} 小时'],
   lessHour: ['Less than 1 h til deadline', '不到 1 小时'],
   dueNow: ['Past due', '已过截止时间'],
-  dlHour: ['Optional: due hour', '（可选）截止小时'],
+  dlHour: ['Optional (default: end of day): due hour', '（可选，默认当天结束）截止小时'],
   endOfDay: ['End of day', '当天结束'],
   dueToday: ['Due today', '今天截止'],
   homeBtn: ['Home', '首页'],
