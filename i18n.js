@@ -113,7 +113,7 @@ window.STR = {
   upBtn: ['↑ Prior steps needed', '↑ 需要前置步骤'],
   priorBtn: ['Prior steps needed', '需要前置步骤'],
   nowBtn: ['Ready to start', '现在就能开始'],
-  tagStart: ['Start now · {n} min', '现在开始 · {n} 分钟'],
+  tagStart: ['Start now · {n}', '现在开始 · {n}'],
   tagShort: ['Start · {n} min', '开始 · {n} 分钟'],
   tagAria: ['Change minutes', '改时长'],
   gen: ['Build the line', '生成产线'],

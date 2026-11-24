@@ -156,8 +156,9 @@
     if (d === null && !e) return '';
     return '<div class="meta">' + (d !== null ? '<span class="days">' + esc(daysText(g)) + '</span>' : '') + (e ? '<span class="est">' + esc(e) + '</span>' : '') + '</div>';
   }
-  function clock(sec) { var m = Math.floor(sec / 60), s = sec % 60; return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s; }
-  function minsLbl(m) { return m === 0 ? tr('na') : tr('min', { n: m }); }
+  /* hours:minutes:seconds, as the timer and the time labels show it; people still type plain minutes */
+  function clock(sec) { sec = Math.max(0, Math.round(sec)); var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), q = sec % 60; return h + ':' + (m < 10 ? '0' : '') + m + ':' + (q < 10 ? '0' : '') + q; }
+  function minsLbl(m) { return m === 0 ? tr('na') : clock(m * 60); }
   /* the label on a box: a list shows every item's time added up */
   function boxMins(n) {
     if (n.items && n.items.length && n.mins > 0) { var c = typeof n.items[0] === 'string' ? n.items.length : itemsLeft(n); return minsLbl(n.mins * Math.max(1, c)); }
@@ -635,7 +636,7 @@
     if (st === 'run') tagInner = PAUSE + '<span id="tagTxt">' + clock(timerLeft()) + '</span>';
     else if (st === 'pause') tagInner = PLAY + '<span>' + clock(timerLeft()) + '</span>';
     else if (st === 'end') { tagInner = '<span>' + esc(tr('timeUp')) + '</span>'; cls += ' end'; }
-    else tagInner = (n.mins ? PLAY : '') + '<span>' + esc(n.mins ? tr('tagStart', { n: n.mins }) : tr('tagStartNA')) + '</span>';
+    else tagInner = (n.mins ? PLAY : '') + '<span>' + esc(n.mins ? tr('tagStart', { n: clock(n.mins * 60) }) : tr('tagStartNA')) + '</span>';
     var frac = (st === 'run' || st === 'pause') ? timerFrac() : (st === 'end' ? 1 : 0);
     var h = '<div class="cur-wrap' + (S.timer && S.timer.id !== n.id ? ' idle' : '') + '"><button type="button" class="tagbtn" data-a="timer" data-id="' + n.id + '"><span class="' + cls + '">' + tagInner + '</span></button>' +
       '<div class="card cur"><i id="' + (st === 'run' ? 'tbar' : 'tbar0') + '" class="tbar' + (st === 'end' ? ' end' : '') + '" style="width:' + Math.round(frac * 100) + '%"></i><i class="corner-t"></i>' +
