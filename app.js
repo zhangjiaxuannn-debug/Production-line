@@ -158,6 +158,11 @@
   }
   function clock(sec) { var m = Math.floor(sec / 60), s = sec % 60; return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s; }
   function minsLbl(m) { return m === 0 ? tr('na') : tr('min', { n: m }); }
+  /* the label on a box: a list shows every item's time added up */
+  function boxMins(n) {
+    if (n.items && n.items.length && n.mins > 0) { var c = typeof n.items[0] === 'string' ? n.items.length : itemsLeft(n); return minsLbl(n.mins * Math.max(1, c)); }
+    return minsLbl(n.mins);
+  }
   function mk(text, start, mins) { return { id: uid(), text: text, needs: [], start: !!start, mins: mins == null ? 15 : mins, repeat: null, log: {}, status: 'todo', tag: '' }; }
 
   /* ---------- repeat ---------- */
@@ -681,7 +686,7 @@
     else if (isDone(n)) h += '<div class="bx node isdone" role="button" tabindex="0" data-a="edit" data-id="' + n.id + '"><span>' + esc(n.text) + '</span></div>';
     else if (isReady(g, n) && n.start) h += '<div class="bx curbx">' + curCard(n) + '</div>';
     else if (isReady(g, n)) h += '<div class="bx">' + readyCard(n) + '</div>';
-    else h += '<div class="bx node ' + (n.start ? 'start' : 'plain') + '" role="button" tabindex="0" data-a="edit" data-id="' + n.id + '">' + (n.start ? '<span class="tag">' + esc(minsLbl(n.mins)) + '</span>' : '') + '<span>' + esc(n.text) + '</span></div>';
+    else h += '<div class="bx node ' + (n.start ? 'start' : 'plain') + '" role="button" tabindex="0" data-a="edit" data-id="' + n.id + '">' + (n.start ? '<span class="tag">' + esc(boxMins(n)) + '</span>' : '') + '<span>' + esc(n.text) + '</span></div>';
     return h + '</div>';
   }
   function vTree(g) { return '<div class="tree" id="tree"><div class="tree-in">' + lcol(g, 'root', 0, 1) + '</div></div>'; }
@@ -907,7 +912,7 @@
       var n = f.n;
       inner = '<label for="renIn" class="small">' + esc(tr('stepText')) + '</label><input id="renIn" class="field" autocomplete="off" enterkeyhint="done" value="' + esc(n.text) + '">';
       if (!isDone(n)) {
-        if (n.start) inner += pickerHtml(n.mins, isRec(n) ? n.repeat : null, !!n.items);
+        if (n.start) inner += (n.items ? '<div class="small">' + esc(tr('qHowItem')) + '</div>' : '') + pickerHtml(n.mins, isRec(n) ? n.repeat : null, !!n.items);
         else inner += '<button type="button" class="b-primary" data-a="make-start-sheet" data-id="' + n.id + '">' + esc(tr('nowBtn')) + '</button>';
         if (isRec(n)) inner += '<button type="button" class="b-outline" data-a="end-repeat" data-id="' + n.id + '">' + esc(tr('endRepeat')) + '</button>';
       }
@@ -1095,7 +1100,7 @@
       h += '</div>';
     } else {
       h += '<div class="bx node start' + actCls + (n.mins == null ? ' untimed' : '') + '" data-k="b-' + n.id + '" role="button" tabindex="0" data-a="su-edit" data-id="' + n.id + '">';
-      h += '<button type="button" class="tag' + (n.mins != null ? '' : ' unset') + '" data-a="su-mins" data-id="' + n.id + '" aria-label="' + esc(tr('tagAria')) + '">' + esc(n.mins != null ? minsLbl(n.mins) : tr('setMins')) + '</button>';
+      h += '<button type="button" class="tag' + (n.mins != null ? '' : ' unset') + '" data-a="su-mins" data-id="' + n.id + '" aria-label="' + esc(tr('tagAria')) + '">' + esc(n.mins != null ? boxMins(n) : tr('setMins')) + '</button>';
       h += '<span>' + esc(n.text) + (n.items && n.items.length ? ' <small class="li-n">' + esc(tr('nItems', { n: n.items.length })) + '</small>' : '') + '</span>' + suPlus(n, parent, idx, sibs) + '</div>';
     }
     return h + '</div>';
