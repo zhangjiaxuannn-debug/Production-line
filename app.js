@@ -922,7 +922,7 @@
       else inner += '<button type="button" class="b-outline" data-a="' + (f.status === 'standby' ? 'resume' : 'standby') + '" data-id="' + f.id + '">' + esc(f.status === 'standby' ? tr('resume') : tr('toStandby')) + '</button><button type="button" class="b-outline" data-a="del-ask">' + esc(tr('del')) + '</button><button type="button" class="b-text" data-a="close">' + esc(tr('close')) + '</button>';
     } else if (sh.type === 'sumins') {
       var sf = suFind(sh.id);
-      inner = '<div class="h3">' + esc(tr('qHow')) + '</div>' + pickerHtml(sf ? sf.n.mins : null, sf ? sf.n.rep : null, !!(sf && sf.n.items)) + '<button type="button" class="pk-ok" data-a="close">' + esc(tr('good')) + '</button>';
+      inner = '<div class="h3">' + esc(tr(sf && sf.n.items ? 'qHowItem' : 'qHow')) + '</div>' + pickerHtml(sf ? sf.n.mins : null, sf ? sf.n.rep : null, !!(sf && sf.n.items)) + '<button type="button" class="pk-ok" data-a="close">' + esc(tr('good')) + '</button>';
     } else if (sh.type === 'hdel') {
       f = gById(sh.id); if (!f) return '';
       inner = '<div class="preview">' + esc(f.title) + '</div><div class="h3">' + esc(tr('delAsk')) + '</div><div class="btns"><button type="button" class="b-primary" data-a="hdel-yes" data-id="' + f.id + '">' + esc(tr('del')) + '</button><button type="button" class="b-outline" data-a="close">' + esc(tr('cancel')) + '</button></div>';

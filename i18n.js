@@ -101,6 +101,7 @@ window.STR = {
   addUp: ['Add a step before', '在前面加一步'],
   addDown: ['Add a step after', '在后面加一步'],
   qHow: ['How long will this take?', '这一项要做多久？'],
+  qHowItem: ['How long will each item in the list take?', '清单里每一项要做多久？'],
   howLong: ['Minutes', '分钟'],
   other: ['Other, please type', '其他，请输入'],
   qAll: ['All ready', '都能开始了'],
