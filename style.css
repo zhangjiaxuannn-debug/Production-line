@@ -575,8 +575,11 @@ legend { padding: 0; margin-bottom: 10px; font-size: 17px; font-weight: 700; }
 
 /* the horizontal scroll bar of the step tree: slim grey channel, square blue thumb.
    Only the webkit pieces are used on Chrome, Edge and Safari (the standard scrollbar-color would turn them off and bring back a round thumb). */
-.tree::-webkit-scrollbar { height: 5px; }
+.tree::-webkit-scrollbar { height: 6px; }
 .tree::-webkit-scrollbar-track { background: #D8DAD4; border-radius: 0; }
 .tree::-webkit-scrollbar-thumb { background: #142A6E; border-radius: 0; }
 .tree::-webkit-scrollbar-corner { background: transparent; }
 @supports not selector(::-webkit-scrollbar) { .tree { scrollbar-width: thin; scrollbar-color: #142A6E #D8DAD4; } }
+
+/* more room between the goal block and the scroll bar */
+.tree { padding-bottom: 36px; }
