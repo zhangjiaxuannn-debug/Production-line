@@ -555,7 +555,6 @@ legend { padding: 0; margin-bottom: 10px; font-size: 17px; font-weight: 700; }
 .kind-seg button { border: 0; border-radius: 0; background: #fff; font-size: 13px; color: var(--ink); padding: 0 4px; }
 .kind-seg button + button { border-left: 1px solid #C9CCC6; }
 .kind-seg button.on { background: var(--accent); color: var(--on-accent); font-weight: 600; }
-.li-ta { width: 100%; box-sizing: border-box; min-height: 52px; border: 1.5px solid var(--ink); border-radius: 0; padding: 6px 8px; font: inherit; font-size: 14px; line-height: 1.5; background: #fff; color: var(--ink); resize: vertical; -webkit-appearance: none; appearance: none; }
 .li-n { font-weight: 400; color: var(--muted); font-size: 11px; margin-left: 4px; }
 .card.cur { position: relative; }
 .li-cur { font-size: 28px; font-weight: 700; line-height: 1.2; margin: 2px 0 4px; overflow-wrap: anywhere; }
@@ -588,3 +587,14 @@ legend { padding: 0; margin-bottom: 10px; font-size: 17px; font-weight: 700; }
 /* Type switch: the bar grows with its text, both halves are always the same height, and the border closes all four sides */
 .kind-seg { height: auto; min-height: 34px; box-sizing: border-box; align-items: stretch; overflow: hidden; }
 .kind-seg button { display: flex; align-items: center; justify-content: center; min-height: 34px; padding: 4px 4px; line-height: 1.2; text-align: center; box-sizing: border-box; overflow-wrap: anywhere; }
+
+/* list text area: numbered lines, one row high at the start, grows by line; a long item stays on one line while editing */
+.li-wrap { display: flex; align-items: flex-start; border: 1.5px solid var(--ink); background: #fff; }
+.li-gut { flex: 0 0 auto; min-width: 20px; padding: 6px 4px 6px 8px; box-sizing: border-box; text-align: right; font-family: var(--mono); font-size: 12px; line-height: 20px; color: var(--muted); white-space: pre; user-select: none; -webkit-user-select: none; }
+.li-ta { flex: 1; min-width: 0; box-sizing: border-box; border: 0; border-radius: 0; background: transparent; padding: 6px 8px 6px 6px; font: inherit; font-size: 14px; line-height: 20px; color: var(--ink); white-space: pre; overflow-x: auto; overflow-y: hidden; resize: none; -webkit-appearance: none; appearance: none; }
+.li-ta:focus-visible { outline: none; }
+
+/* the top part of a draft box has the same border thickness as the part below it; the list box hides its own side scroll bar so it never covers a line */
+.bx.draft .field { border-width: 1.5px; }
+.li-ta { scrollbar-width: none; }
+.li-ta::-webkit-scrollbar { display: none; }

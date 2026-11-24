@@ -1080,7 +1080,7 @@
       if (actCls) {
         var isList = n.kind === 'list';
         h += '<div class="dpanel"><div class="pk-lbl">' + esc(tr('typeLbl')) + '</div><div class="kind-seg"><button type="button" class="' + (isList ? '' : 'on') + '" data-a="su-kind" data-id="' + n.id + '" data-v="task" aria-pressed="' + (!isList) + '">' + esc(tr('kindTask')) + '</button><button type="button" class="' + (isList ? 'on' : '') + '" data-a="su-kind" data-id="' + n.id + '" data-v="list" aria-pressed="' + isList + '">' + esc(tr('kindList')) + '</button></div>';
-        if (isList) h += '<div class="pk-lbl">' + esc(tr('listLines')) + '</div><textarea id="li-' + n.id + '" class="li-ta" rows="2" data-lid="' + n.id + '">' + esc(n.itemsText || '') + '</textarea>';
+        if (isList) { var lm = (function () { var q = String(n.itemsText || '').split(String.fromCharCode(10)).length, g = []; for (var z = 1; z <= q; z++) g.push(z); return { n: q, g: g.join(String.fromCharCode(10)) }; })(); h += '<div class="pk-lbl">' + esc(tr('listLines')) + '</div><div class="li-wrap"><div class="li-gut" id="lg-' + n.id + '" aria-hidden="true">' + lm.g + '</div><textarea id="li-' + n.id + '" class="li-ta" rows="' + lm.n + '" wrap="off" data-lid="' + n.id + '" aria-label="' + esc(tr('listLines')) + '">' + esc(n.itemsText || '') + '</textarea></div>'; }
         h += '</div>';
       }
       h += suPlus(n, parent, idx, sibs) + '</div>';
@@ -1279,7 +1279,13 @@
     var t = e.target, su = T.setup;
     if (t.id === 'goalIn' && su) { su.goal = t.value; var ok = document.getElementById('goalOk'); if (ok) ok.hidden = !su.goal.trim(); return; }
     if (t.id === 'dlIn' && su) { su.date = t.value; var g = document.getElementById('dlGo'); if (g) g.disabled = !t.value; return; }
-    if (t.dataset && t.dataset.lid && su) { var lf = suFind(t.dataset.lid); if (lf) lf.n.itemsText = t.value; return; }
+    if (t.dataset && t.dataset.lid && su) {
+      var lf = suFind(t.dataset.lid); if (lf) lf.n.itemsText = t.value;
+      var lq = t.value.split(String.fromCharCode(10)).length, lg = document.getElementById('lg-' + t.dataset.lid), lnums = [];
+      for (var lz = 1; lz <= lq; lz++) lnums.push(lz);
+      t.rows = lq; if (lg) lg.textContent = lnums.join(String.fromCharCode(10));
+      return;
+    }
     if (t.dataset && t.dataset.sid && su) {
       var f = suFind(t.dataset.sid); if (f) f.n.text = t.value;
       var b = document.getElementById('ok-' + t.dataset.sid); if (b) b.hidden = !t.value.trim();
