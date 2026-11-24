@@ -1080,7 +1080,7 @@
       if (actCls) {
         var isList = n.kind === 'list';
         h += '<div class="dpanel"><div class="pk-lbl">' + esc(tr('typeLbl')) + '</div><div class="kind-seg"><button type="button" class="' + (isList ? '' : 'on') + '" data-a="su-kind" data-id="' + n.id + '" data-v="task" aria-pressed="' + (!isList) + '">' + esc(tr('kindTask')) + '</button><button type="button" class="' + (isList ? 'on' : '') + '" data-a="su-kind" data-id="' + n.id + '" data-v="list" aria-pressed="' + isList + '">' + esc(tr('kindList')) + '</button></div>';
-        if (isList) h += '<div class="pk-lbl">' + esc(tr('listLines')) + '</div><textarea id="li-' + n.id + '" class="li-ta" rows="2" data-lid="' + n.id + '">' + esc(n.itemsText || '') + '</textarea><div class="li-num"><span>' + esc(tr('numberTo')) + '</span><input id="ln-' + n.id + '" inputmode="numeric" maxlength="2" value="12" aria-label="' + esc(tr('numberTo')) + '"><button type="button" data-a="su-number" data-id="' + n.id + '">' + esc(tr('numberFill')) + '</button></div>';
+        if (isList) h += '<div class="pk-lbl">' + esc(tr('listLines')) + '</div><textarea id="li-' + n.id + '" class="li-ta" rows="2" data-lid="' + n.id + '">' + esc(n.itemsText || '') + '</textarea>';
         h += '</div>';
       }
       h += suPlus(n, parent, idx, sibs) + '</div>';
@@ -1603,14 +1603,6 @@
       case 'su-kind':
         f = suFind(id); if (!f) return;
         f.n.kind = v === 'list' ? 'list' : 'task';
-        render('in-' + id); return;
-      case 'su-number':
-        f = suFind(id); if (!f) return;
-        (function () {
-          var cnt = Math.max(1, Math.min(60, Math.round(+(document.getElementById('ln-' + id) || {}).value) || 12)), arr = [];
-          for (var q = 1; q <= cnt; q++) arr.push(String(q));
-          f.n.itemsText = arr.join(String.fromCharCode(10));
-        })();
         render('in-' + id); return;
       case 'li-all': T.sheet = { type: 'li', id: id }; break;
       case 'su-tips': T.sheet = { type: 'tips' }; render(); return;
