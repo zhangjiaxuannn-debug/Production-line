@@ -598,3 +598,6 @@ legend { padding: 0; margin-bottom: 10px; font-size: 17px; font-weight: 700; }
 .bx.draft .field { border-width: 1.5px; }
 .li-ta { scrollbar-width: none; }
 .li-ta::-webkit-scrollbar { display: none; }
+
+.li-lbl { letter-spacing: 0.06em; }
+.kbd-ic { width: 1.15em; height: 1.15em; vertical-align: -0.2em; margin: 0 1px; }

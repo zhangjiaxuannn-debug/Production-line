@@ -37,7 +37,7 @@ window.STR = {
   typeLbl: ['Type', '类型'],
   kindTask: ['Single task', '单个任务'],
   kindList: ['List', '清单'],
-  listLines: ['Enter = next item', '回车 = 下一项'],
+  listLines: ['Enter {k} to add next item', '回车 {k} 输入下一项'],
   nItems: ['{n} items', '{n} 项'],
   itemOf: ['{a} of {b}', '第 {a} / {b} 项'],
   seeAll: ['See all {n}', '查看全部 {n} 项'],

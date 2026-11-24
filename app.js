@@ -377,6 +377,7 @@
       box.style.translate = (xm - g.offsetWidth / 2) + 'px 0';
     });
   }
+  var ENTER_IC = '<svg class="kbd-ic" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M20 4v8a3 3 0 0 1-3 3H5"/><path d="M10 9l-5 6 5 6"/></svg>';
   function setCenter(id) {
     T.centerId = id;
     T.clicks = (T.clicks || []).filter(function (x) { return x !== id; });
@@ -1080,7 +1081,7 @@
       if (actCls) {
         var isList = n.kind === 'list';
         h += '<div class="dpanel"><div class="pk-lbl">' + esc(tr('typeLbl')) + '</div><div class="kind-seg"><button type="button" class="' + (isList ? '' : 'on') + '" data-a="su-kind" data-id="' + n.id + '" data-v="task" aria-pressed="' + (!isList) + '">' + esc(tr('kindTask')) + '</button><button type="button" class="' + (isList ? 'on' : '') + '" data-a="su-kind" data-id="' + n.id + '" data-v="list" aria-pressed="' + isList + '">' + esc(tr('kindList')) + '</button></div>';
-        if (isList) { var lm = (function () { var q = String(n.itemsText || '').split(String.fromCharCode(10)).length, g = []; for (var z = 1; z <= q; z++) g.push(z); return { n: q, g: g.join(String.fromCharCode(10)) }; })(); h += '<div class="pk-lbl">' + esc(tr('listLines')) + '</div><div class="li-wrap"><div class="li-gut" id="lg-' + n.id + '" aria-hidden="true">' + lm.g + '</div><textarea id="li-' + n.id + '" class="li-ta" rows="' + lm.n + '" wrap="off" data-lid="' + n.id + '" aria-label="' + esc(tr('listLines')) + '">' + esc(n.itemsText || '') + '</textarea></div>'; }
+        if (isList) { var lm = (function () { var q = String(n.itemsText || '').split(String.fromCharCode(10)).length, g = []; for (var z = 1; z <= q; z++) g.push(z); return { n: q, g: g.join(String.fromCharCode(10)) }; })(); h += '<div class="pk-lbl li-lbl">' + esc(tr('listLines')).replace('{k}', ENTER_IC) + '</div><div class="li-wrap"><div class="li-gut" id="lg-' + n.id + '" aria-hidden="true">' + lm.g + '</div><textarea id="li-' + n.id + '" class="li-ta" rows="' + lm.n + '" wrap="off" data-lid="' + n.id + '" aria-label="' + esc(tr('listLines')).replace('{k}', '') + '">' + esc(n.itemsText || '') + '</textarea></div>'; }
         h += '</div>';
       }
       h += suPlus(n, parent, idx, sibs) + '</div>';
