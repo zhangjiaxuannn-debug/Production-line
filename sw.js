@@ -1,4 +1,4 @@
-const CACHE = 'shengchanxian-p3-38';
+const CACHE = 'shengchanxian-p3-39';
 const ASSETS = ["./", "./index.html", "./style.css", "./i18n.js", "./app.js", "./manifest.webmanifest", "./icons/icon-180.png", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png"];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
