@@ -910,7 +910,7 @@
         else inner += '<button type="button" class="b-primary" data-a="make-start-sheet" data-id="' + n.id + '">' + esc(tr('nowBtn')) + '</button>';
         if (isRec(n)) inner += '<button type="button" class="b-outline" data-a="end-repeat" data-id="' + n.id + '">' + esc(tr('endRepeat')) + '</button>';
       }
-      inner += '<button type="button" class="b-text" data-a="close">' + esc(tr('close')) + '</button>';
+      inner += '<button type="button" class="b-text" data-a="close">' + esc(tr('closeSave')) + '</button>';
     } else if (sh.type === 'miss') {
       f = findNode(sh.id); if (!f) return '';
       inner = '<div class="preview">' + esc(f.n.text) + '</div><div class="h3">' + esc(tr('missQ')) + '</div><div class="small">' + esc(tr('missHint')) + '</div><button type="button" class="b-primary" data-a="miss-split" data-id="' + sh.id + '">' + esc(tr('missSplit')) + '</button><button type="button" class="b-outline" data-a="miss-keep" data-id="' + sh.id + '">' + esc(tr('missKeep')) + '</button>';

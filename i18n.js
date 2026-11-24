@@ -180,6 +180,7 @@ window.STR = {
   add: ['Add', '加上'],
   cancel: ['Cancel', '取消'],
   close: ['Close', '关闭'],
+  closeSave: ['Close & save', '保存并关闭'],
   good: ['OK', '好'],
 
   goalMenu: ['Goal', '目标'],
