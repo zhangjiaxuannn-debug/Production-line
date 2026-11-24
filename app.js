@@ -111,6 +111,10 @@
   }
   function nodesOf(g) { return Object.keys(g.nodes).map(function (k) { return g.nodes[k]; }); }
   function isDone(n) { return n.status === 'done'; }
+  /* a list step: one step made of several small items, each with the same time */
+  function itemsLeft(n) { return n.items ? n.items.filter(function (i) { return !i.d; }).length : 0; }
+  function listCur(n) { if (!n.items) return -1; for (var i = 0; i < n.items.length; i++) if (!n.items[i].d) return i; return -1; }
+  function schedMins(n) { var m = n.mins || 15; return n.items ? m * Math.max(1, itemsLeft(n)) : m; }
   function isReady(g, n) { return !isDone(n) && n.needs.every(function (id) { return !g.nodes[id] || isDone(g.nodes[id]); }); }
   function readyList(g) {
     var r = nodesOf(g).filter(function (n) { return isReady(g, n); });
@@ -118,8 +122,12 @@
   }
   function goalDone(g) { return g.needs.length > 0 && g.needs.every(function (id) { return !g.nodes[id] || isDone(g.nodes[id]); }); }
   function progress(g) {
-    var all = nodesOf(g), d = all.filter(isDone).length;
-    return { done: d, total: all.length, pct: all.length ? Math.round(d * 100 / all.length) : 0 };
+    var all = nodesOf(g), d = 0, tot = 0;
+    all.forEach(function (n) {
+      if (n.items && n.items.length) { tot += n.items.length; d += isDone(n) ? n.items.length : n.items.length - itemsLeft(n); }
+      else { tot += 1; if (isDone(n)) d += 1; }
+    });
+    return { done: d, total: tot, pct: tot ? Math.round(d * 100 / tot) : 0 };
   }
   function dlEndOf(dl, dlh) {
     if (!dl) return null;
@@ -137,7 +145,7 @@
     return d === 1 ? tr('dayLeft') : tr('daysLeft', { n: d });
   }
   function daysText(g) { return leftTextMs(dlEnd(g) - Date.now()); }
-  function estMins(g) { var t = 0; nodesOf(g).forEach(function (n) { if (!isDone(n) && n.mins > 0) t += n.mins; }); return t; }
+  function estMins(g) { var t = 0; nodesOf(g).forEach(function (n) { if (!isDone(n) && n.mins > 0) t += n.items ? n.mins * itemsLeft(n) : n.mins; }); return t; }
   function estText(g) {
     var t = estMins(g); if (!t) return '';
     var hh = Math.floor(t / 60), mm = t % 60;
@@ -472,7 +480,7 @@
       rem.forEach(function (f, i) { if (f.n.id === S.timer.id) ri = i; });
       if (ri >= 0) {
         var rf = rem.splice(ri, 1)[0]; delete left[rf.n.id];
-        var rs = S.timer.startAt || (S.timer.endAt - S.timer.total * 1000), rm = rf.n.mins || 15;
+        var rs = S.timer.startAt || (S.timer.endAt - S.timer.total * 1000), rm = schedMins(rf.n);
         var re = Math.max(rs + rm * 60000, Math.ceil(Date.now() / 300000) * 300000);
         out.push({ g: rf.g, n: rf.n, start: rs, end: re, locked: false, unfit: false, started: true });
         if (re > cu) cu = re;
@@ -500,7 +508,7 @@
       }
       if (idx < 0) idx = 0;
       var f = rem.splice(idx, 1)[0]; delete left[f.n.id];
-      var mins = f.n.mins || 15, st;
+      var mins = schedMins(f.n), st;
       var unfit = false;
       if (urgent(f)) {
         st = cu;
@@ -626,11 +634,15 @@
     var h = '<div class="cur-wrap' + (S.timer && S.timer.id !== n.id ? ' idle' : '') + '"><button type="button" class="tagbtn" data-a="timer" data-id="' + n.id + '"><span class="' + cls + '">' + tagInner + '</span></button>' +
       '<div class="card cur"><i id="' + (st === 'run' ? 'tbar' : 'tbar0') + '" class="tbar' + (st === 'end' ? ' end' : '') + '" style="width:' + Math.round(frac * 100) + '%"></i><i class="corner-t"></i>' +
       '<div class="lbl">' + esc(n.text) + '</div>';
+    if (n.items && listCur(n) >= 0) {
+      var lci = listCur(n);
+      h += '<div class="li-cur">' + esc(n.items[lci].t) + '</div><div class="li-pos"><span>' + esc(tr('itemOf', { a: lci + 1, b: n.items.length })) + '</span><button type="button" class="li-all" data-a="li-all" data-id="' + n.id + '">' + esc(tr('seeAll', { n: n.items.length })) + '</button></div>';
+    }
     if (rec) h += '<div class="mins">' + esc(repLabel(n)) + '</div>';
     if (n.prevMins) h += '<span class="adj chg">' + minsHtml(n) + '</span>';
     if (st === 'pause') h += '<div class="paused"><span>' + esc(tr('paused')) + '</span><button type="button" class="mini" data-a="timer-reset" data-id="' + n.id + '">' + esc(tr('resetTimer')) + '</button></div>';
     h += '<div class="btns"><button type="button" class="b b-navy b-done" data-a="done" data-id="' + n.id + '">' + esc(tr('done')) + '</button><button type="button" class="b b-line" data-a="miss" data-id="' + n.id + '">' + esc(tr('miss')) + '</button></div>' +
-      '<div class="btns"><button type="button" class="b b-split" data-a="edit" data-id="' + n.id + '">' + esc(tr('edit')) + '</button></div></div></div>';
+      '<div class="btns"><button type="button" class="b b-split" data-a="edit" data-id="' + n.id + '">' + esc(tr('edit')) + '</button></div>' + (n.items ? '<i class="li-bar"><i style="width:' + Math.round((n.items.length - itemsLeft(n)) * 100 / n.items.length) + '%"></i></i>' : '') + '</div></div>';
     return h;
   }
   function readyCard(n) {
@@ -764,7 +776,8 @@
 
     var otherWrap = document.getElementById('pkOtherWrap'), otherIn = document.getElementById('pkOtherIn'), unsure = document.getElementById('pkUnsure');
     var daysWrap = document.getElementById('pkDaysWrap'), daysEl = document.getElementById('pkDays'), sumEl = document.getElementById('pkSum');
-    if (!otherWrap || !daysEl) return;
+    if (!otherWrap) return;
+    var hasRep = !!daysEl;
 
     var dur = makeSeg(document.getElementById('pkDur'), ['5', '15', '30', '60', tr('otherSeg')], function () { return st.dur; }, function (i) {
       touch(); st.dur = i; dur.paint(i);
@@ -789,6 +802,7 @@
       commit();
     });
 
+    if (hasRep) {
     /* days: drag to paint */
     var dayLong = DAY_ORDER.map(function (d) { return dayName(d); });
     var dayShortLbl = S.lang === 'zh' ? dayLong : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -852,20 +866,22 @@
       applyRep(); paintDays();
     });
     paintDays();
+    }
     pkResize = function () {
-      [dur, rep].forEach(function (g) { g.thumb.style.transition = 'none'; });
-      dur.paint(st.dur); rep.paint(st.rep);
-      requestAnimationFrame(function () { dur.thumb.style.transition = ''; rep.thumb.style.transition = ''; });
+      var gs = hasRep ? [dur, rep] : [dur];
+      gs.forEach(function (g) { g.thumb.style.transition = 'none'; });
+      dur.paint(st.dur); if (hasRep) rep.paint(st.rep);
+      requestAnimationFrame(function () { gs.forEach(function (g) { g.thumb.style.transition = ''; }); });
     };
     window.addEventListener('resize', pkResize);
   }
 
-  function pickerHtml(pm, pr) {
+  function pickerHtml(pm, pr, noRep) {
     var pOther = pm === 0 || (pm != null && [5, 15, 30, 60].indexOf(pm) < 0);
       return         '<div class="pk-grp"><div class="pk-lbl">' + esc(tr('minPh')) + '</div><div class="pk-bar pk-seg" id="pkDur" role="radiogroup" tabindex="0"></div>' +
         '<div class="pk-reveal' + (pOther ? ' open' : '') + '" id="pkOtherWrap"><div><div class="pk-in"><div class="pk-other"><input id="pkOtherIn" inputmode="numeric" autocomplete="off" aria-label="' + esc(tr('minPh')) + '" placeholder="' + esc(tr('minPh')) + '" value="' + (pm > 0 && [5, 15, 30, 60].indexOf(pm) < 0 ? pm : '') + '"' + (pm === 0 ? ' disabled' : '') + '><button type="button" class="pk-unsure" id="pkUnsure" aria-pressed="' + (pm === 0) + '">' + esc(tr('notSure')) + '</button></div></div></div></div></div>' +
-        '<div class="pk-grp"><div class="pk-lbl">' + esc(tr('repeat')) + '</div><div class="pk-bar pk-seg" id="pkRep" role="radiogroup" tabindex="0"></div>' +
-        '<div class="pk-reveal' + (pr && pr.length ? ' open' : '') + '" id="pkDaysWrap"><div><div class="pk-in"><div class="pk-bar pk-days" id="pkDays" role="group" tabindex="0"></div><div class="pk-sum" id="pkSum" aria-live="polite"></div></div></div></div></div>';
+        (noRep ? '' : '<div class="pk-grp"><div class="pk-lbl">' + esc(tr('repeat')) + '</div><div class="pk-bar pk-seg" id="pkRep" role="radiogroup" tabindex="0"></div>' +
+        '<div class="pk-reveal' + (pr && pr.length ? ' open' : '') + '" id="pkDaysWrap"><div><div class="pk-in"><div class="pk-bar pk-days" id="pkDays" role="group" tabindex="0"></div><div class="pk-sum" id="pkSum" aria-live="polite"></div></div></div></div></div>');
   }
   function vSheet() {
     var sh = T.sheet; if (!sh) return '';
@@ -890,7 +906,7 @@
       var n = f.n;
       inner = '<label for="renIn" class="small">' + esc(tr('stepText')) + '</label><input id="renIn" class="field" autocomplete="off" enterkeyhint="done" value="' + esc(n.text) + '">';
       if (!isDone(n)) {
-        if (n.start) inner += pickerHtml(n.mins, isRec(n) ? n.repeat : null);
+        if (n.start) inner += pickerHtml(n.mins, isRec(n) ? n.repeat : null, !!n.items);
         else inner += '<button type="button" class="b-primary" data-a="make-start-sheet" data-id="' + n.id + '">' + esc(tr('nowBtn')) + '</button>';
         if (isRec(n)) inner += '<button type="button" class="b-outline" data-a="end-repeat" data-id="' + n.id + '">' + esc(tr('endRepeat')) + '</button>';
       }
@@ -905,12 +921,16 @@
       else inner += '<button type="button" class="b-outline" data-a="' + (f.status === 'standby' ? 'resume' : 'standby') + '" data-id="' + f.id + '">' + esc(f.status === 'standby' ? tr('resume') : tr('toStandby')) + '</button><button type="button" class="b-outline" data-a="del-ask">' + esc(tr('del')) + '</button><button type="button" class="b-text" data-a="close">' + esc(tr('close')) + '</button>';
     } else if (sh.type === 'sumins') {
       var sf = suFind(sh.id);
-      inner = '<div class="h3">' + esc(tr('qHow')) + '</div>' + pickerHtml(sf ? sf.n.mins : null, sf ? sf.n.rep : null) + '<button type="button" class="pk-ok" data-a="close">' + esc(tr('good')) + '</button>';
+      inner = '<div class="h3">' + esc(tr('qHow')) + '</div>' + pickerHtml(sf ? sf.n.mins : null, sf ? sf.n.rep : null, !!(sf && sf.n.items)) + '<button type="button" class="pk-ok" data-a="close">' + esc(tr('good')) + '</button>';
     } else if (sh.type === 'hdel') {
       f = gById(sh.id); if (!f) return '';
       inner = '<div class="preview">' + esc(f.title) + '</div><div class="h3">' + esc(tr('delAsk')) + '</div><div class="btns"><button type="button" class="b-primary" data-a="hdel-yes" data-id="' + f.id + '">' + esc(tr('del')) + '</button><button type="button" class="b-outline" data-a="close">' + esc(tr('cancel')) + '</button></div>';
     } else if (sh.type === 'schcal') {
       inner = '<div class="h3">' + esc(tr('pickDate')) + '</div>' + calHtml(T.schCal || (T.schCal = { calY: null, calM: null, date: '' }), 'sch-cal') + '<button type="button" class="b-text" data-a="close">' + esc(tr('close')) + '</button>';
+    } else if (sh.type === 'li') {
+      f = findNode(sh.id); if (!f || !f.n.items) return '';
+      var lcur = listCur(f.n);
+      inner = '<div class="h3">' + esc(f.n.text) + '</div><div class="li-list">' + f.n.items.map(function (it, i) { return '<div class="li-row' + (it.d ? ' dn' : '') + (i === lcur ? ' now' : '') + '"><i class="li-bx' + (it.d ? ' k' : '') + '"></i><span>' + esc(it.t) + '</span></div>'; }).join('') + '</div><button type="button" class="b-text" data-a="close">' + esc(tr('close')) + '</button>';
     } else if (sh.type === 'tips') {
       inner = '<div class="h3">' + esc(tr('tipsTitle')) + '</div><ul class="tips-list"><li>' + esc(tr('tip1')) + '</li><li>' + esc(tr('tip2')) + '</li><li>' + esc(tr('tip4')) + '</li><li>' + esc(tr('tip3')) + '</li></ul><button type="button" class="b-primary" data-a="close">' + esc(tr('good')) + '</button>';
     } else if (sh.type === 'day') {
@@ -938,6 +958,7 @@
     function conv(id) {
       var n = g.nodes[id]; if (!n) return null;
       var o = { id: 'o_' + id, real: id, state: 'set', text: n.text, mins: n.mins, rep: n.repeat && n.repeat.length ? n.repeat.slice() : null, needs: [] };
+      if (n.items && n.items.length) { o.kind = 'list'; o.items = n.items.map(function (i) { return i.t; }); o.rep = null; }
       n.needs.forEach(function (c) { var k = conv(c); if (k) o.needs.push(k); });
       return o;
     }
@@ -946,6 +967,17 @@
     su.phase = 'chain'; su.goal = g.title; su.dl = g.dl; su.dlh = g.dlh == null ? null : g.dlh; su.editGid = g.id;
     return su;
   }
+  /* keep which items were already done when the list is edited */
+  function applyItems(n, o) {
+    if (!o.items || !o.items.length) { delete n.items; return; }
+    var old = n.items || [], used = {};
+    n.items = o.items.map(function (t) {
+      var d = false;
+      old.forEach(function (x, i) { if (!used[i] && !d && x.t === t) { used[i] = 1; d = !!x.d; } });
+      return { t: t, d: d };
+    });
+    if (n.status === 'done' && itemsLeft(n)) n.status = 'todo';
+  }
   function suApply() {
     var su = T.setup, g = gById(su.editGid); if (!g) return;
     var keep = {};
@@ -953,10 +985,12 @@
       var id;
       if (o.real && g.nodes[o.real]) {
         id = o.real; var n = g.nodes[id];
-        n.text = o.text; n.mins = o.mins === 0 ? 0 : (o.mins || 15); n.repeat = o.rep && o.rep.length ? o.rep.slice() : null;
+        n.text = o.text; n.mins = o.mins === 0 ? 0 : (o.mins || 15); n.repeat = o.items && o.items.length ? null : (o.rep && o.rep.length ? o.rep.slice() : null);
+        applyItems(n, o);
       } else {
         id = uid();
-        g.nodes[id] = { id: id, text: o.text, needs: [], start: true, mins: o.mins === 0 ? 0 : (o.mins || 15), repeat: o.rep && o.rep.length ? o.rep.slice() : null, log: {}, status: 'todo', tag: '' };
+        g.nodes[id] = { id: id, text: o.text, needs: [], start: true, mins: o.mins === 0 ? 0 : (o.mins || 15), repeat: o.items && o.items.length ? null : (o.rep && o.rep.length ? o.rep.slice() : null), log: {}, status: 'todo', tag: '' };
+        applyItems(g.nodes[id], o);
       }
       keep[id] = 1;
       g.nodes[id].needs = (o.needs || []).map(put);
@@ -1043,6 +1077,12 @@
     if (n.state === 'draft') {
       h += '<div class="bx draft' + actCls + '" data-k="b-' + n.id + '"><input id="in-' + n.id + '" class="field" data-sid="' + n.id + '" enterkeyhint="done" autocomplete="off" placeholder="' + esc(tr('write')) + '" value="' + esc(n.text) + '">' +
         '<button type="button" class="ok" id="ok-' + n.id + '" data-a="su-confirm" data-id="' + n.id + '" aria-label="' + esc(tr('setTime')) + '"' + (n.text.trim() ? '' : ' hidden') + '>' + CLOCK + '</button>';
+      if (actCls) {
+        var isList = n.kind === 'list';
+        h += '<div class="dpanel"><div class="pk-lbl">' + esc(tr('typeLbl')) + '</div><div class="kind-seg"><button type="button" class="' + (isList ? '' : 'on') + '" data-a="su-kind" data-id="' + n.id + '" data-v="task" aria-pressed="' + (!isList) + '">' + esc(tr('kindTask')) + '</button><button type="button" class="' + (isList ? 'on' : '') + '" data-a="su-kind" data-id="' + n.id + '" data-v="list" aria-pressed="' + isList + '">' + esc(tr('kindList')) + '</button></div>';
+        if (isList) h += '<div class="pk-lbl">' + esc(tr('listLines')) + '</div><textarea id="li-' + n.id + '" class="li-ta" rows="4" data-lid="' + n.id + '" placeholder="' + esc(tr('listPh')) + '">' + esc(n.itemsText || '') + '</textarea><div class="li-num"><span>' + esc(tr('numberTo')) + '</span><input id="ln-' + n.id + '" inputmode="numeric" maxlength="2" value="12" aria-label="' + esc(tr('numberTo')) + '"><button type="button" data-a="su-number" data-id="' + n.id + '">' + esc(tr('numberFill')) + '</button></div>';
+        h += '</div>';
+      }
       h += suPlus(n, parent, idx, sibs) + '</div>';
     } else if (n.state === 'product') {
       h += '<div class="prod-wrap"><div class="bx prod" data-k="goalbox" style="--d:' + ((md + 1) * step) + 'ms"><span class="k">' + esc(tr('product')) + '</span><span class="t">' + esc(su.goal) + '</span><i class="fill"></i></div>';
@@ -1055,7 +1095,7 @@
     } else {
       h += '<div class="bx node start' + actCls + (n.mins == null ? ' untimed' : '') + '" data-k="b-' + n.id + '" role="button" tabindex="0" data-a="su-edit" data-id="' + n.id + '">';
       h += '<button type="button" class="tag' + (n.mins != null ? '' : ' unset') + '" data-a="su-mins" data-id="' + n.id + '" aria-label="' + esc(tr('tagAria')) + '">' + esc(n.mins != null ? minsLbl(n.mins) : tr('setMins')) + '</button>';
-      h += '<span>' + esc(n.text) + '</span>' + suPlus(n, parent, idx, sibs) + '</div>';
+      h += '<span>' + esc(n.text) + (n.items && n.items.length ? ' <small class="li-n">' + esc(tr('nItems', { n: n.items.length })) + '</small>' : '') + '</span>' + suPlus(n, parent, idx, sibs) + '</div>';
     }
     return h + '</div>';
   }
@@ -1094,7 +1134,14 @@
   function suNextFocus() { var d = suFirstDraft(); T.setup.focus = d ? d.id : null; if (d) T.setup.sel = null; return d ? 'in-' + d.id : null; }
   function suConfirm(id) {
     var f = suFind(id); if (!f || !f.n.text.trim()) return;
+    var lines = null;
+    if (f.n.kind === 'list') {
+      lines = String(f.n.itemsText || '').split(String.fromCharCode(10)).map(function (x) { return x.trim(); }).filter(Boolean);
+      if (!lines.length) return;
+    }
     suPush();
+    if (lines) { f.n.items = lines; f.n.rep = null; } else { delete f.n.items; delete f.n.kind; }
+    delete f.n.itemsText;
     f.n.text = f.n.text.trim(); f.n.state = 'set';
     var nf = suNextFocus(); if (!nf) T.setup.sel = id;
     render(nf);
@@ -1110,7 +1157,8 @@
   }
   function suConvert(n, g) {
     var id = uid();
-    var node = { id: id, text: n.text, needs: [], start: true, mins: n.mins === 0 ? 0 : (n.mins || 15), repeat: n.rep && n.rep.length ? n.rep.slice() : null, log: {}, status: 'todo', tag: '' };
+    var node = { id: id, text: n.text, needs: [], start: true, mins: n.mins === 0 ? 0 : (n.mins || 15), repeat: n.items && n.items.length ? null : (n.rep && n.rep.length ? n.rep.slice() : null), log: {}, status: 'todo', tag: '' };
+    if (n.items && n.items.length) node.items = n.items.map(function (t) { return { t: t, d: false }; });
     g.nodes[id] = node;
     (n.needs || []).forEach(function (c) { node.needs.push(suConvert(c, g)); });
     return id;
@@ -1231,6 +1279,7 @@
     var t = e.target, su = T.setup;
     if (t.id === 'goalIn' && su) { su.goal = t.value; var ok = document.getElementById('goalOk'); if (ok) ok.hidden = !su.goal.trim(); return; }
     if (t.id === 'dlIn' && su) { su.date = t.value; var g = document.getElementById('dlGo'); if (g) g.disabled = !t.value; return; }
+    if (t.dataset && t.dataset.lid && su) { var lf = suFind(t.dataset.lid); if (lf) lf.n.itemsText = t.value; return; }
     if (t.dataset && t.dataset.sid && su) {
       var f = suFind(t.dataset.sid); if (f) f.n.text = t.value;
       var b = document.getElementById('ok-' + t.dataset.sid); if (b) b.hidden = !t.value.trim();
@@ -1396,7 +1445,11 @@
         f = findNode(id); clearTimerFor(id);
         if (f) {
           f.n.prevMins = null;
-          if (isRec(f.n)) { f.n.log[todayKey()] = 'done'; T.msg = tr('msgDoneRep'); }
+          if (f.n.items && listCur(f.n) >= 0) {
+            f.n.items[listCur(f.n)].d = true;
+            if (itemsLeft(f.n) === 0) f.n.status = 'done';
+          }
+          else if (isRec(f.n)) { f.n.log[todayKey()] = 'done'; T.msg = tr('msgDoneRep'); }
           else {
             f.n.status = 'done';
             T.msg = goalDone(f.g) ? tr('msgGoal') : (f.n.needs.length > 1 ? say('stage', 'msgDone') : say('step', 'msgDone'));
@@ -1547,6 +1600,19 @@
           for (var q = T.clicks.length - 1; q >= 0; q--) { if (suFind(T.clicks[q])) { T.centerId = T.clicks[q]; break; } }
         })();
         render(suNextFocus()); return;
+      case 'su-kind':
+        f = suFind(id); if (!f) return;
+        f.n.kind = v === 'list' ? 'list' : 'task';
+        render('in-' + id); return;
+      case 'su-number':
+        f = suFind(id); if (!f) return;
+        (function () {
+          var cnt = Math.max(1, Math.min(60, Math.round(+(document.getElementById('ln-' + id) || {}).value) || 12)), arr = [];
+          for (var q = 1; q <= cnt; q++) arr.push(String(q));
+          f.n.itemsText = arr.join(String.fromCharCode(10));
+        })();
+        render('in-' + id); return;
+      case 'li-all': T.sheet = { type: 'li', id: id }; break;
       case 'su-tips': T.sheet = { type: 'tips' }; render(); return;
       case 'su-mins':
         if (e) e.stopPropagation();
@@ -1557,6 +1623,7 @@
         f = suFind(id); if (!f || f.n.state !== 'set') return;
         if (su.sel !== id) { su.sel = id; setCenter(id); render(); return; }
         suPush();
+        if (f.n.items) { f.n.kind = 'list'; f.n.itemsText = f.n.items.join(String.fromCharCode(10)); }
         f.n.state = 'draft'; su.focus = f.n.id; su.sel = null; setCenter(f.n.id); render('in-' + f.n.id); return;
       case 'line-edit':
         (function () { var lg = gById(S.cur); if (!lg) return; save(); T.setup = suFromGoal(lg); T.screen = 'setup'; T.sheet = null; T.msg = ''; })();
