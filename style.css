@@ -587,3 +587,7 @@ legend { padding: 0; margin-bottom: 10px; font-size: 17px; font-weight: 700; }
 /* the blue frame of the box being written goes around the whole box, the Type part too */
 .bx.draft.act { outline: 2px solid var(--navy); outline-offset: 2px; }
 .bx.draft.act .field:focus-visible { outline: none; }
+
+/* Type switch: the bar grows with its text, both halves are always the same height, and the border closes all four sides */
+.kind-seg { height: auto; min-height: 34px; box-sizing: border-box; align-items: stretch; overflow: hidden; }
+.kind-seg button { display: flex; align-items: center; justify-content: center; min-height: 34px; padding: 4px 4px; line-height: 1.2; text-align: center; box-sizing: border-box; overflow-wrap: anywhere; }
